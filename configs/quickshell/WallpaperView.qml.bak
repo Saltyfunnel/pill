@@ -1,0 +1,275 @@
+// WallpaperView.qml — carousel wallpaper picker, hosted inside the morphing pill.
+//   A big preview of the selected wallpaper, and a coverflow strip of thumbnails.
+//   Left / Right (or the mouse wheel) move along the strip, Enter or a click on the selected one applies it.
+//   Type to search. Tab picks a random one. Esc closes.
+//   Applying hands the path to setwall.sh, which recolours everything.
+import Quickshell
+import Quickshell.Io
+import QtQuick
+import QtQuick.Effects
+
+Item {
+  id: root
+
+  signal closeRequested()
+
+  // matches the old card: 1000 x 640
+  implicitWidth: 1000
+  implicitHeight: 640
+
+  property string homeDir: Quickshell.env("HOME")
+  property string wallpaperDir: homeDir + "/Pictures/Wallpapers"
+  property string searchQuery: ""
+
+  // every wallpaper found: [{ path, name }]
+  property var all: []
+  // the ones matching the search
+  property var results: {
+    const q = root.searchQuery
+    if (q === "") return root.all
+    return root.all.filter(w => w.name.toLowerCase().includes(q))
+  }
+  property var current: strip.currentIndex >= 0 && strip.currentIndex < results.length ? results[strip.currentIndex] : null
+
+  Component.onCompleted: {
+    strip.currentIndex = 0
+    Qt.callLater(searchField.forceActiveFocus)
+  }
+
+  function apply(w) {
+    if (!w) return
+    Quickshell.execDetached([
+      "sh", "-c",
+      "export PATH=\"$PATH:" + root.homeDir + "/.cargo/bin\"; " +
+      "export HYPRLAND_INSTANCE_SIGNATURE=\"" + Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") + "\"; " +
+      "\"" + root.homeDir + "/.config/scripts/setwall.sh\" \"" + w.path + "\""
+    ])
+    root.closeRequested()
+  }
+
+  // ---------- scanning the wallpaper folder (runs once each time the view opens) ----------
+  Process {
+    id: loadWallpapers
+    command: ["sh", "-c", "find \"" + root.wallpaperDir + "\" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.jpeg' \\) | sort"]
+    running: true
+    stdout: SplitParser {
+      onRead: data => {
+        const path = data.trim()
+        if (path !== "") root.all = root.all.concat([{ path: path, name: path.split("/").pop() }])
+      }
+    }
+  }
+
+  // ----- blurred wallpaper backdrop: the view takes on the colours of the selection -----
+  Image {
+    id: bgSrc
+    anchors.fill: parent
+    sourceSize.width: 160       // tiny decode, the blur hides it anyway
+    fillMode: Image.PreserveAspectCrop
+    asynchronous: true
+    source: root.current ? "file://" + root.current.path : ""
+    visible: false
+    layer.enabled: true
+  }
+  Rectangle {                    // rounded-corner mask for the blur
+    id: bgMask
+    anchors.fill: parent
+    radius: 22
+    visible: false
+    layer.enabled: true
+  }
+  MultiEffect {
+    anchors.fill: parent
+    source: bgSrc
+    maskEnabled: true
+    maskSource: bgMask
+    blurEnabled: true
+    blur: 1.0
+    blurMax: 64
+    saturation: 0.3
+  }
+  Rectangle {                    // darken so text stays readable
+    anchors.fill: parent
+    radius: 22
+    color: Qt.rgba(0, 0, 0, 0.55)
+  }
+
+  // Mouse wheel / touchpad scrolling anywhere across the view.
+  // Accumulates delta so a touchpad swipe steps once per ~120 units instead of firing wildly.
+  WheelHandler {
+    id: wheel
+    property real acc: 0
+    onWheel: event => {
+      const delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+      acc += delta
+      while (acc >= 120) { strip.decrementCurrentIndex(); acc -= 120 }
+      while (acc <= -120) { strip.incrementCurrentIndex(); acc += 120 }
+      event.accepted = true
+    }
+  }
+
+  Column {
+    anchors.fill: parent
+    anchors.margins: 24
+    spacing: 14
+
+    // ----- header: title + search -----
+    Row {
+      width: parent.width
+      height: 38
+      spacing: 16
+
+      Row {
+        spacing: 10
+        anchors.verticalCenter: parent.verticalCenter
+        Text {
+          text: "󰸉"
+          color: Colors.accent
+          font.family: "Hack Nerd Font"
+          font.pixelSize: 22
+          anchors.verticalCenter: parent.verticalCenter
+        }
+        Text {
+          text: "Wallpapers"
+          color: Colors.text
+          font.family: "Hack Nerd Font"
+          font.pixelSize: 18
+          font.bold: true
+          anchors.verticalCenter: parent.verticalCenter
+        }
+      }
+
+      Rectangle {
+        width: 280
+        height: 34
+        radius: 17
+        color: Colors.card
+        border.color: searchField.activeFocus ? Colors.accent : "transparent"
+        border.width: 1
+        anchors.verticalCenter: parent.verticalCenter
+
+        Row {
+          anchors.fill: parent
+          anchors.leftMargin: 14
+          anchors.rightMargin: 14
+          spacing: 8
+
+          Text {
+            text: "󰍉"
+            color: Colors.accent
+            font.family: "Hack Nerd Font"
+            font.pixelSize: 14
+            anchors.verticalCenter: parent.verticalCenter
+          }
+
+          TextInput {
+            id: searchField
+            width: parent.width - 28
+            height: parent.height
+            color: Colors.text
+            font.family: "Hack Nerd Font"
+            font.pixelSize: 13
+            verticalAlignment: TextInput.AlignVCenter
+            clip: true
+
+            onTextChanged: {
+              root.searchQuery = text.trim().toLowerCase()
+              strip.currentIndex = 0
+            }
+            Keys.onEscapePressed: root.closeRequested()
+            Keys.onReturnPressed: root.apply(root.current)
+            Keys.onEnterPressed: root.apply(root.current)
+            // Left / Right move along the strip, unless you are editing a search
+            Keys.onLeftPressed: event => { if (text === "") strip.decrementCurrentIndex(); else event.accepted = false }
+            Keys.onRightPressed: event => { if (text === "") strip.incrementCurrentIndex(); else event.accepted = false }
+            // Tab jumps to a random wallpaper
+            Keys.onTabPressed: event => {
+              if (root.results.length > 0)
+                strip.currentIndex = Math.floor(Math.random() * root.results.length)
+              event.accepted = true
+            }
+
+            Text {
+              text: "Search..."
+              color: Colors.text
+              opacity: 0.4
+              font.family: "Hack Nerd Font"
+              font.pixelSize: 13
+              anchors.verticalCenter: parent.verticalCenter
+              visible: searchField.text === ""
+            }
+          }
+        }
+      }
+    }
+
+    // ----- big preview of the selected wallpaper -----
+    Item {
+      width: parent.width
+      height: 300
+
+      Rectangle { anchors.fill: parent; radius: 16; color: Colors.card }
+
+      RoundedImage {
+        id: previewImg
+        anchors.fill: parent
+        radius: 16
+        source: root.current ? "file://" + root.current.path : ""
+      }
+
+      Connections {
+        target: root
+        function onCurrentChanged() { swap.restart() }
+      }
+      ParallelAnimation {
+        id: swap
+        NumberAnimation { target: previewImg; property: "opacity"; from: 0.3; to: 1; duration: 260 }
+        NumberAnimation { target: previewImg; property: "scale"; from: 0.96; to: 1; duration: 360; easing.type: Easing.OutCubic }
+      }
+
+      // caption pill: name + position
+      Rectangle {
+        visible: root.current !== null
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: 14
+        height: 30
+        width: capText.implicitWidth + 28
+        radius: 15
+        color: Qt.rgba(0, 0, 0, 0.55)
+        Text {
+          id: capText
+          anchors.centerIn: parent
+          color: "white"
+          font.family: "Hack Nerd Font"
+          font.pixelSize: 12
+          text: root.current ? root.current.name + "   ·   " + (strip.currentIndex + 1) + " / " + root.results.length : ""
+        }
+      }
+
+      Text {
+        anchors.centerIn: parent
+        visible: root.results.length === 0
+        text: root.all.length === 0 ? "No wallpapers found in ~/Pictures/Wallpapers" : "No matches"
+        color: Colors.subtext
+        font.pixelSize: 14
+      }
+    }
+
+    // ----- the strip -----
+    ListView {
+      id: strip
+      width: parent.width
+      height: 168
+      orientation: ListView.Horizontal
+      model: root.results
+      clip: true
+      currentIndex: 0
+      highlightRangeMode: ListView.StrictlyEnforceRange     // keep the selected one centred
+      preferredHighlightBegin: width / 2 - 120
+      preferredHighlightEnd: width / 2 + 120
+      highlightMoveDuration: 220
+
+      interactive: false          // we drive currentIndex ourselves (wheel + drag below)
+
+      // mouse wheel / touchpad over the strip
