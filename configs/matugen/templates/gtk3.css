@@ -1,0 +1,330 @@
+/* --- Global Border & Highlight Reset --- */
+* {
+  border-color: transparent;
+  box-shadow: none;
+  outline-color: transparent;
+}
+
+window, .background {
+  background-color: {{colors.surface.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+}
+
+/* --- Sidebar / main panel divider --- */
+paned > separator,
+paned > separator:hover,
+paned > separator:backdrop,
+paned.horizontal > separator,
+paned.horizontal > separator:hover {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  box-shadow: none;
+  min-width: 1px;
+}
+
+/* --- Scrolled window edges (can draw a line next to the view) --- */
+scrolledwindow,
+scrolledwindow viewport,
+scrolledwindow undershoot,
+scrolledwindow overshoot {
+  border: none;
+  border-image: none;
+  background-image: none;
+  box-shadow: none;
+}
+
+/* Force headerbars and internal boxes to stay dark without breaking parser */
+headerbar,
+.titlebar,
+.header-bar,
+headerbar box,
+.titlebar box,
+.header-bar box,
+headerbar grid,
+.titlebar grid {
+  background-color: {{colors.surface.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  background-image: none;
+  box-shadow: none;
+  border-color: {{colors.outline_variant.default.hex}};
+}
+
+/* Header hover state matching normal background */
+headerbar:hover,
+.titlebar:hover,
+.header-bar:hover,
+headerbar:backdrop,
+.titlebar:backdrop {
+  background-color: {{colors.surface.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  background-image: none;
+  box-shadow: none;
+}
+
+/* Style header buttons on hover */
+headerbar button:hover,
+.titlebar button:hover,
+.header-bar button:hover {
+  background-color: {{colors.primary_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  background-image: none;
+}
+
+.view, iconview, treeview.view, textview text {
+  background-color: {{colors.surface_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  border-image: none;
+  box-shadow: none;
+}
+
+/* Sidebar: no border on any side, including the divider edge */
+.sidebar,
+.sidebar:dir(ltr),
+.sidebar:dir(rtl),
+.sidebar .view {
+  background-color: {{colors.surface_container_low.default.hex}};
+  border: none;
+  border-image: none;
+  box-shadow: none;
+}
+
+/* Sidebar text/icons: same colour in every state (file chooser, Thunar) */
+.sidebar row,
+.sidebar row label,
+.sidebar row:backdrop,
+.sidebar row:backdrop label,
+window:backdrop .sidebar row label,
+placessidebar row,
+placessidebar row label,
+placessidebar row:backdrop label {
+  color: {{colors.on_surface.default.hex}};
+  opacity: 1;
+}
+
+.sidebar row image,
+.sidebar row:backdrop image,
+placessidebar row image,
+placessidebar row:backdrop image {
+  color: {{colors.on_surface_variant.default.hex}};
+  opacity: 1;
+  -gtk-icon-effect: none;
+}
+
+.sidebar row:hover,
+placessidebar row:hover {
+  background-color: alpha({{colors.primary.default.hex}}, 0.15);
+}
+
+/* keep the selected row's text readable on the primary colour */
+.sidebar row:selected label,
+.sidebar row:selected image,
+placessidebar row:selected label,
+placessidebar row:selected image {
+  color: {{colors.on_primary.default.hex}};
+}
+
+.view:selected, iconview:selected, row:selected, treeview.view:selected, .sidebar row:selected {
+  background-color: {{colors.primary.default.hex}};
+  color: {{colors.on_primary.default.hex}};
+}
+
+/* --- Rubberband (drag-select box) --- */
+rubberband,
+.rubberband,
+.view.rubberband,
+iconview rubberband,
+iconview .rubberband,
+treeview.view rubberband {
+  background-color: alpha({{colors.primary.default.hex}}, 0.2);
+  background-image: none;
+  border: 1px solid {{colors.primary.default.hex}};
+  box-shadow: none;
+}
+
+/* --- Selected icon view items (replaces default blue) --- */
+iconview:selected,
+iconview .cell:selected,
+iconview.view .cell:selected,
+.view .cell:selected,
+.view:selected:focus,
+iconview:selected:focus {
+  background-color: {{colors.primary.default.hex}};
+  background-image: none;
+  color: {{colors.on_primary.default.hex}};
+  border-radius: 8px;
+}
+
+button {
+  background-image: none;
+  background-color: {{colors.surface_container_highest.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  border-color: {{colors.outline_variant.default.hex}};
+  box-shadow: none;
+}
+
+button:hover {
+  background-color: {{colors.primary_container.default.hex}};
+}
+
+/* --- Global Entry & Search Bar Override --- */
+entry,
+text,
+searchbar,
+.search-bar,
+searchbar entry,
+.search-bar entry,
+GtkSearchEntry {
+  background-color: {{colors.surface_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  border-color: {{colors.outline_variant.default.hex}};
+  background-image: none;
+  box-shadow: none;
+}
+
+entry:focus,
+text:focus,
+searchbar entry:focus,
+.search-bar entry:focus,
+GtkSearchEntry:focus {
+  background-color: {{colors.surface_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  border-color: {{colors.primary.default.hex}};
+}
+
+/* --- Thunar Specific Location Bar & Toolbar Container Lock --- */
+thunar toolbar,
+.thunar toolbar,
+thunar .location-bar,
+.thunar .location-bar,
+thunar .path-bar,
+.thunar .path-bar,
+.path-bar.linked,
+.path-bar.linked > box,
+.path-bar.linked > stack,
+thunar toolbar box,
+.thunar toolbar box {
+  background-color: {{colors.surface_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  background-image: none;
+  box-shadow: none;
+  border: none;
+}
+
+/* Force state locks for path bar buttons inside Thunar */
+.path-bar.linked > button,
+.path-bar.linked > button:hover,
+.path-bar.linked > button:active,
+.path-bar.linked > button:checked,
+.path-bar button,
+pathbar button {
+  background-color: {{colors.surface_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  background-image: none;
+  box-shadow: none;
+  border-color: {{colors.outline_variant.default.hex}};
+}
+
+.path-bar.linked > button:hover,
+.path-bar button:hover {
+  background-color: {{colors.primary_container.default.hex}};
+}
+
+.path-bar.linked > button:checked,
+.path-bar button:checked {
+  background-color: {{colors.primary.default.hex}};
+  color: {{colors.on_primary.default.hex}};
+}
+
+/* Thunar location entry bar */
+GtkEntry.path-bar-entry,
+entry.path-bar-entry {
+  background-color: {{colors.surface_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  border: 1px solid {{colors.outline_variant.default.hex}};
+  box-shadow: none;
+}
+
+menu, .menu, popover, .popover {
+  background-color: {{colors.surface_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+  border: 1px solid {{colors.outline_variant.default.hex}};
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+menu menuitem:hover, .menu menuitem:hover {
+  background-color: {{colors.primary.default.hex}};
+  color: {{colors.on_primary.default.hex}};
+}
+
+/* --- Menubar (Thunar's File/Edit/View bar) --- */
+menubar,
+.menubar,
+menubar:backdrop,
+.menubar:backdrop,
+window:backdrop menubar {
+  background-color: {{colors.surface.default.hex}};
+  background-image: none;
+  color: {{colors.on_surface.default.hex}};
+  border: none;
+  box-shadow: none;
+}
+
+menubar > menuitem,
+menubar > menuitem label {
+  background-color: transparent;
+  background-image: none;
+  color: {{colors.on_surface.default.hex}};
+}
+
+menubar > menuitem:hover,
+menubar > menuitem:checked,
+menubar > menuitem:active {
+  background-color: {{colors.primary_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+}
+
+/* --- Infobar (Trash "Restore / Empty Trash" bar, and other Thunar notices) --- */
+infobar,
+infobar.info,
+infobar.warning,
+infobar.question,
+infobar.error,
+infobar.other,
+infobar > revealer > box,
+infobar revealer box {
+  background-color: {{colors.surface_container_low.default.hex}};
+  background-image: none;
+  color: {{colors.on_surface.default.hex}};
+  border: none;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+infobar label,
+infobar button label {
+  color: {{colors.on_surface.default.hex}};
+}
+
+infobar button,
+infobar.info button,
+infobar.warning button,
+infobar.question button,
+infobar.error button,
+infobar.other button {
+  background-color: {{colors.surface_container_highest.default.hex}};
+  background-image: none;
+  color: {{colors.on_surface.default.hex}};
+  border: 1px solid {{colors.outline_variant.default.hex}};
+  box-shadow: none;
+  text-shadow: none;
+}
+
+infobar button:hover {
+  background-color: {{colors.primary_container.default.hex}};
+  color: {{colors.on_surface.default.hex}};
+}
+
+infobar button:disabled label {
+  color: alpha({{colors.on_surface.default.hex}}, 0.5);
+}

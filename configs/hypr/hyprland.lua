@@ -1,0 +1,228 @@
+--------------------------------------------------------------------------------
+-- gpu environment (written by install.sh)
+--------------------------------------------------------------------------------
+
+local gpu_env = dofile(os.getenv("HOME") .. "/.config/hypr/gpu-env.lua")
+for k, v in pairs(gpu_env) do
+    hl.env(k, v)
+end
+
+--------------------------------------------------------------------------------
+-- monitor
+--------------------------------------------------------------------------------
+
+hl.monitor({
+    output   = "",         -- Matches any screen (laptop panel eDP-1, DP-1, HDMI, etc.)
+    mode     = "highres",  -- Automatically uses the highest resolution available
+    position = "auto",
+    scale    = "1",        -- Strict 1:1 scale (prevents desktop scaling/zooming)
+})
+
+--------------------------------------------------------------------------------
+-- autostart
+--------------------------------------------------------------------------------
+
+hl.on("hyprland.start", function()
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+    hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
+    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("quickshell")
+    hl.exec_cmd("mako")
+    hl.exec_cmd("udiskie")
+    hl.exec_cmd("gsettings set org.gnome.desktop.interface icon-theme 'Colloid-Dynamic-Dark'")
+    hl.exec_cmd("~/.config/scripts/setwall.sh --restore")       -- re-apply last wallpaper + colours
+end)
+
+--------------------------------------------------------------------------------
+-- input
+--------------------------------------------------------------------------------
+
+hl.config({
+    input = {
+        kb_layout    = "gb",
+        follow_mouse = 1,
+        sensitivity  = 0,
+        touchpad     = {
+            natural_scroll = false,
+        },
+    }
+})
+
+--------------------------------------------------------------------------------
+-- wallpaper colours (matugen writes ~/.config/hypr/colors.lua)
+--------------------------------------------------------------------------------
+
+local ok, theme = pcall(dofile, os.getenv("HOME") .. "/.config/hypr/colors.lua")
+if not ok or type(theme) ~= "table" then theme = {} end
+
+local border_a   = theme.primary         or "rgba(33ccffee)"
+local border_b   = theme.tertiary        or "rgba(00ff99ee)"
+local border_off = theme.outline_variant or "rgba(595959aa)"
+
+--------------------------------------------------------------------------------
+-- look & feel
+--------------------------------------------------------------------------------
+
+hl.config({
+    general = {
+        gaps_in          = 4,
+        gaps_out         = 8,
+        border_size      = 2,
+        resize_on_border = true,
+        allow_tearing    = false,
+        layout           = "dwindle",
+        col              = {
+            active_border   = { colors = { border_a, border_b }, angle = 45 },
+            inactive_border = border_off,
+        },
+    },
+
+    decoration = {
+        rounding         = 12,
+        active_opacity   = 1.0,
+        inactive_opacity = 0.95,
+        shadow = {
+            enabled = true,
+            range = 8,
+            render_power = 3,
+            color = "rgba(1a1a1aee)",
+        },
+        blur = {
+            enabled = true,
+            size = 3,
+            passes = 1,
+            vibrancy = 0,
+        },
+    },
+
+    misc = {
+        force_default_wallpaper  = 0,
+        disable_hyprland_logo    = true,
+        disable_splash_rendering = true,
+        vrr                      = 0,
+    },
+
+    cursor = {
+        no_hardware_cursors = false,
+    },
+
+    animations = {
+        enabled = true,
+    },
+})
+
+--------------------------------------------------------------------------------
+-- animations (jazzed up)
+--------------------------------------------------------------------------------
+
+hl.curve("smoothOut", { type = "bezier", points = { { 0.23, 1 }, { 0.32, 1 } } })
+hl.curve("quick", { type = "bezier", points = { { 0.15, 0 }, { 0.1, 1 } } })
+hl.curve("bounce", { type = "bezier", points = { { 0.175, 0.885 }, { 0.32, 1.275 } } })
+hl.curve("liner", { type = "bezier", points = { { 1, 1 }, { 1, 1 } } })
+
+hl.animation({ leaf = "windows",    enabled = true, speed = 3, bezier = "bounce",    style = "popin" })
+hl.animation({ leaf = "windowsIn",  enabled = true, speed = 3, bezier = "quick",     style = "popin 80%" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 4, bezier = "smoothOut", style = "popin 80%" })
+hl.animation({ leaf = "windowsMove",enabled = true, speed = 3, bezier = "quick",     style = "slide" })
+hl.animation({ leaf = "fade",       enabled = true, speed = 4, bezier = "quick" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 3, bezier = "smoothOut", style = "slide" })
+
+--------------------------------------------------------------------------------
+-- window rules
+--------------------------------------------------------------------------------
+
+hl.window_rule({ match = { class = "pavucontrol" }, float = true })
+hl.window_rule({ match = { class = "blueman-manager" }, float = true })
+hl.window_rule({ match = { title = "WallpaperPicker" }, float = true })
+hl.window_rule({ match = { title = "WallpaperPicker" }, center = true })
+
+-- Browser and Application Opacities
+hl.window_rule({ match = { class = "firefox" }, opacity = "0.90 0.90 1.0 override" })
+hl.window_rule({ match = { class = "dev.zed.Zed" }, opacity = "0.90" })
+hl.window_rule({ match = { class = "kitty" }, opacity = "0.80" })
+hl.window_rule({ match = { class = "^[tT]hunar$" }, opacity = "0.80 0.80" })
+hl.window_rule({ match = { class = "Spotify" }, opacity = "0.80 0.80" })
+hl.window_rule({ match = { class = "kitty" }, suppress_event = "maximize" })
+
+hl.window_rule({ match = { class = "updates" }, float = true })
+hl.window_rule({ match = { class = "updates" }, center = true })
+hl.window_rule({ match = { class = "updates" }, size = "900 500" })
+hl.window_rule({ match = { class = "updates" }, opacity = "0.80" })
+hl.window_rule({ match = { class = "updates" }, suppress_event = "maximize" })
+
+--------------------------------------------------------------------------------
+-- layer rules (blur behind the see-through dashboard popup)
+--------------------------------------------------------------------------------
+
+hl.layer_rule({
+    match = { namespace = "^quickshell$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.3,
+})
+
+--------------------------------------------------------------------------------
+-- keybinds
+--------------------------------------------------------------------------------
+
+local mod  = "SUPER"
+local term = "kitty"
+local ed   = "zeditor"
+local br   = "firefox"
+local fm   = "thunar"
+
+-- core
+hl.bind(mod .. " + Return", hl.dsp.exec_cmd(term))
+hl.bind(mod .. " + Escape", hl.dsp.exit())
+hl.bind(mod .. " + Q", hl.dsp.window.close())
+hl.bind(mod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+
+-- apps
+hl.bind(mod .. " + F", hl.dsp.exec_cmd(fm))
+hl.bind(mod .. " + W", hl.dsp.exec_cmd("qs ipc call WallpaperPicker toggle"))
+hl.bind(mod .. " + D", hl.dsp.exec_cmd("qs ipc call launcher toggle"))
+hl.bind(mod .. " + C", hl.dsp.exec_cmd(ed))
+hl.bind(mod .. " + B", hl.dsp.exec_cmd(br))
+hl.bind(mod .. " + I", hl.dsp.exec_cmd(term .. " -e btop"))
+hl.bind(mod .. " + S", hl.dsp.exec_cmd("spotify-launcher"))
+
+-- trash
+hl.bind(mod .. " + ALT + E", hl.dsp.exec_cmd(
+    "sh -c \"trash-empty -f; notify-send -i user-trash-full 'Trash Service' 'Wastebasket has been cleared across all drives.'\""
+))
+
+-- media
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"), { repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
+hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"))
+hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"))
+hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"))
+
+-- focus
+hl.bind(mod .. " + H", hl.dsp.focus({ direction = "left" }))
+hl.bind(mod .. " + L", hl.dsp.focus({ direction = "right" }))
+hl.bind(mod .. " + K", hl.dsp.focus({ direction = "up" }))
+hl.bind(mod .. " + J", hl.dsp.focus({ direction = "down" }))
+
+-- workspaces
+for i = 1, 5 do
+    hl.bind(mod .. " + " .. i, hl.dsp.focus({ workspace = i }))
+    hl.bind(mod .. " + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
+end
+
+-- scroll workspaces
+hl.bind(mod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
+hl.bind(mod .. " + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
+
+-- move/resize with mouse
+hl.bind(mod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+
+--------------------------------------------------------------------------------
+-- workspaces (1-5 always exist, matching the five dots in the bar)
+--------------------------------------------------------------------------------
+
+for i = 1, 5 do
+    hl.workspace_rule({ workspace = tostring(i), persistent = true })
+end

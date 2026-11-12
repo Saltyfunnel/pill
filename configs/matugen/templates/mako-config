@@ -1,0 +1,10 @@
+font=Hack Nerd Font 11
+background-color={{colors.surface_container.default.hex}}
+text-color={{colors.on_surface.default.hex}}
+border-color={{colors.primary.default.hex}}
+border-size=2
+border-radius=14
+padding=12
+margin=10
+anchor=top-right
+default-timeout=6000

@@ -1,0 +1,28 @@
+# ==============================================================================
+# Minimal Starship prompt — Material You / Matugen themed (Arch + Current Dir)
+# ==============================================================================
+add_newline = true
+format = """$os $directory$character"""
+
+[os]
+symbols = { "Arch" = " " }
+style = "bold blue"
+format = "[$symbol]($style)"
+disabled = false
+
+[directory]
+style = "cyan"
+format = "[$path]($style)"
+truncation_length = 3
+home_symbol = "~"
+disabled = false
+
+[character]
+success_symbol = "[>](white) "
+error_symbol   = "[>](red) "
+
+[time]
+disabled = true
+
+[fill]
+disabled = true

@@ -1,0 +1,77 @@
+/* --- Matugen GTK4 / Libadwaita Theme Template --- */
+@define-color accent_bg_color {{colors.primary.default.hex}};
+@define-color accent_fg_color {{colors.on_primary.default.hex}};
+@define-color window_bg_color {{colors.surface.default.hex}};
+@define-color window_fg_color {{colors.on_surface.default.hex}};
+@define-color view_bg_color {{colors.surface_container.default.hex}};
+@define-color headerbar_bg_color {{colors.surface.default.hex}};
+@define-color sidebar_bg_color {{colors.surface_container_low.default.hex}};
+
+/* Force Libadwaita's internal fallback tokens to match active palette */
+@define-color theme_unfocused_bg_color {{colors.surface.default.hex}};
+@define-color theme_unfocused_base_color {{colors.surface_container.default.hex}};
+@define-color theme_unfocused_fg_color {{colors.on_surface.default.hex}};
+@define-color theme_unfocused_text_color {{colors.on_surface.default.hex}};
+
+* {
+  border-color: transparent;
+  box-shadow: none;
+  outline-color: transparent;
+}
+
+window, .background {
+  background-color: @window_bg_color;
+  color: @window_fg_color;
+}
+
+headerbar, .titlebar, toolbar, .toolbar, statusbar {
+  background-color: @headerbar_bg_color;
+  color: @window_fg_color;
+  box-shadow: none;
+}
+
+.view, iconview, treeview.view, textview text,
+scrolledwindow, stack, .content-view, .boxed-list {
+  background-color: @view_bg_color;
+  color: @window_fg_color;
+  box-shadow: none;
+}
+
+.sidebar, .sidebar .view {
+  background-color: @sidebar_bg_color;
+}
+
+.view:selected, iconview:selected, row:selected, treeview.view:selected, .sidebar row:selected {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+
+button {
+  background-image: none;
+  background-color: @sidebar_bg_color;
+  color: @window_fg_color;
+  box-shadow: none;
+}
+
+button:hover {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+
+/* Backdrop State Locks */
+window:backdrop, headerbar:backdrop, scrolledwindow:backdrop, stack:backdrop {
+  background-color: @window_bg_color;
+  color: @window_fg_color;
+}
+
+menu, .menu, popover, .popover {
+  background-color: @view_bg_color;
+  color: @window_fg_color;
+  border: 1px solid alpha(@window_fg_color, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+menu menuitem:hover, .menu menuitem:hover {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
