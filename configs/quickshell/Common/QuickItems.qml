@@ -3,8 +3,8 @@ import QtQuick
 import Quickshell
 import "pinorder.js" as PinOrder
 
-// Catálogo de lo que se puede fijar en el menú de la isla y reglas de fijado.
-// El estado (qué está fijado, en qué orden, y los accesos propios) vive en DisplayState.
+// Catalog of items that can be pinned in the island menu and pinning rules.
+// State (what is pinned, in what order, and custom shortcuts) lives in DisplayState.
 Singleton {
     id: root
     readonly property int columns: 4
@@ -12,26 +12,26 @@ Singleton {
     readonly property int maxButtons: columns * maxRows
 
     readonly property var builtins: [
-        { id: "volume", label: I18n.tr("Volumen"), icon: "volume", slider: true },
+        { id: "volume", label: I18n.tr("Volume"), icon: "volume", slider: true },
         { id: "terminal", label: "Terminal", icon: "terminal", slider: false },
-        { id: "record", label: I18n.tr("Grabar pantalla"), icon: "record", slider: false },
-        { id: "capture", label: I18n.tr("Captura"), icon: "capture", slider: false },
-        { id: "desktops", label: I18n.tr("Escritorios"), icon: "desktops", slider: false },
-        { id: "clipboard", label: I18n.tr("Portapapeles"), icon: "clipboard", slider: false },
-        { id: "notes", label: I18n.tr("Notas"), icon: "note", slider: false },
+        { id: "record", label: I18n.tr("Record screen"), icon: "record", slider: false },
+        { id: "capture", label: I18n.tr("Screenshot"), icon: "capture", slider: false },
+        { id: "desktops", label: I18n.tr("Desktops"), icon: "desktops", slider: false },
+        { id: "clipboard", label: I18n.tr("Clipboard"), icon: "clipboard", slider: false },
+        { id: "notes", label: I18n.tr("Notes"), icon: "note", slider: false },
         { id: "emoji", label: I18n.tr("Emojis"), icon: "emoji", slider: false },
-        { id: "browser", label: I18n.tr("Navegador"), icon: "globe", slider: false },
-        { id: "files", label: I18n.tr("Archivos"), icon: "folder", slider: false },
-        // Apaga solo el monitor (DPMS): juegos y apps siguen andando; vuelve con mouse o tecla.
-        { id: "screenoff", label: I18n.tr("Apagar monitor"), icon: "display", slider: false }
+        { id: "browser", label: I18n.tr("Browser"), icon: "globe", slider: false },
+        { id: "files", label: I18n.tr("Files"), icon: "folder", slider: false },
+        // Turns off only the monitor (DPMS): games and apps keep running; returns with mouse or key.
+        { id: "screenoff", label: I18n.tr("Turn off display"), icon: "display", slider: false }
     ]
 
     function isSlider(id) { return id === "volume" }
     function custom(id) { return DisplayState.customItems.find(c => c.id === id) ?? null }
     function exists(id) { return builtins.some(b => b.id === id) || custom(id) !== null }
 
-    // Fijados que existen (ignora accesos propios borrados).
-    // Orden de todos los elementos (catálogo + propios); define el orden en la isla.
+    // Existing pinned items (ignores deleted custom shortcuts).
+    // Order of all elements (catalog + custom); defines the order in the island.
     readonly property var allIds: builtins.map(b => b.id).concat(DisplayState.customItems.map(c => c.id))
     readonly property var order: PinOrder.full(DisplayState.pinOrder, DisplayState.pins, allIds)
     readonly property var orderedPins: PinOrder.sortPins(DisplayState.pins, order)
@@ -46,7 +46,7 @@ Singleton {
     function setPinned(id, on) {
         const rest = DisplayState.pins.filter(p => p !== id)
         if (on && !canPin(id)) return
-        // Congela el orden actual la primera vez, para que reactivar no lo mueva al final.
+        // Freezes the current order the first time, so reactivating doesn't move it to the end.
         if (DisplayState.pinOrder.length === 0) DisplayState.pinOrder = order.slice()
         DisplayState.setPins(on ? rest.concat([id]) : rest)
     }
