@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# Compacta escritorios: si quedó un hueco (p. ej. 1 y 3 con ventanas), las ventanas de 3
-# pasan a 2, etc. Si estás parado en un escritorio vacío no hace nada (se compacta al
-# salir). Se ejecuta por eventos de Hyprland (sin sondeo). Uso: compact-ws.py [--dry-run]
+# Compacts workspaces: if a gap remains (e.g., 1 and 3 have windows), windows from 3
+# move to 2, etc. If you are on an empty workspace it does nothing (it compacts upon
+# leaving). Run by Hyprland events (no polling). Usage: compact-ws.py [--dry-run]
 import json, subprocess, sys
 
 def hypr(*a):
@@ -16,7 +16,7 @@ def main():
         if wid > 0 and c.get("mapped", True):
             by_ws.setdefault(wid, []).append(c["address"])
     if active > 0 and active not in by_ws:
-        return                            # el usuario está en un escritorio vacío
+        return                     # the user is on an empty workspace
     occ = sorted(by_ws)
     moves = [(src, i + 1) for i, src in enumerate(occ) if src != i + 1]
     if not moves: return
