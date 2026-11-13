@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# Posición del cursor para el personaje, sin lanzar hyprctl: un solo proceso que consulta
-# el socket IPC de Hyprland. ~20 Hz mientras el mouse se mueve, ~3 Hz si está quieto >1 s y
-# ~1,5 Hz si lleva >10 s quieto (para entonces el personaje ya dejó de seguirlo: mira al frente).
-# Imprime "x,y" solo cuando cambia. Termina si la shell cierra la salida.
+# Cursor position for the character, without launching hyprctl: a single process that queries
+# the Hyprland IPC socket. ~20 Hz while the mouse moves, ~3 Hz if still >1 s and
+# ~1.5 Hz if still >10 s (by then the character has stopped following: looks straight ahead).
+# Prints "x,y" only when it changes. Exits if the shell closes the output.
 import os, socket, sys, time
 
 def sock_path():
@@ -10,7 +10,7 @@ def sock_path():
     sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
     if not sig:
         if not os.path.isdir(os.path.join(rt, "hypr")):
-            sys.exit(1)                         # sin Hyprland: la shell reintenta
+            sys.exit(1)                          # without Hyprland: the shell retries
         ds = sorted(os.listdir(os.path.join(rt, "hypr")), key=lambda d: os.path.getmtime(os.path.join(rt, "hypr", d)))
         sig = ds[-1]
     return os.path.join(rt, "hypr", sig, ".socket.sock")
@@ -33,7 +33,7 @@ while True:
         pos = query(path); fails = 0
     except OSError:
         fails += 1
-        if fails > 20: sys.exit(1)          # Hyprland no responde: la shell relanza el proceso
+        if fails > 20: sys.exit(1)          # Hyprland does not respond: the shell relaunches the process
         time.sleep(0.5); path = sock_path(); continue
     now = time.monotonic()
     if pos != last:
