@@ -3,23 +3,23 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Historial del portapapeles. Lo guarda cliphist, alimentado por `wl-paste --watch`
-// (autostart): sin sondeos. La lista se lee solo al abrir la vista.
-// Los fijados se guardan aparte (~/.config/island-shell/clip-pins.json), así sobreviven a
-// "Borrar historial" y a reinicios. Solo se fija texto.
+// Clipboard history. Saved by cliphist, fed by `wl-paste --watch`
+// (autostart): no polling. The list is read only when opening the view.
+// Pins are saved separately (~/.config/island-shell/clip-pins.json), so they survive
+// "Clear history" and reboots. Only text is pinned.
 Singleton {
     id: root
-    property var items: []          // [{ line, id, text, binary }] (más reciente primero)
+    property var items: []          // [{ line, id, text, binary }] (newest first)
     property var pins: []           // [string]
-    property bool available: true   // false si falta cliphist
+    property bool available: true   // false if cliphist is missing
     readonly property int maxItems: 40
     readonly property string pinsFile: Quickshell.env("HOME") + "/.config/island-shell/clip-pins.json"
 
     function refresh() { lister.running = false; lister.running = true }
 
-    // Copiar: el elemento vuelve a ser lo último copiado (pegar con Ctrl+V).
-    // Imágenes: se restauran con su tipo (image/png, image/jpeg…) leído de la vista previa de
-    // cliphist ("[[ binary data 182 KiB png 1920x1080 ]]"); texto: wl-copy lo detecta solo.
+    // Copy: the item becomes the last copied item again (paste with Ctrl+V).
+    // Images: restored with their type (image/png, image/jpeg…) read from the
+    // cliphist preview ("[[ binary data 182 KiB png 1920x1080 ]]"); text: wl-copy detects it automatically.
     function mimeOf(item) {
         const m = item.binary ? item.text.match(/binary data .*?\b(png|jpe?g|webp|gif|bmp)\b/i) : null
         return m ? "image/" + m[1].toLowerCase().replace("jpg", "jpeg") : ""
@@ -34,12 +34,12 @@ Singleton {
         items = items.filter(i => i.id !== item.id)
         Quickshell.execDetached(["sh", "-c", 'printf "%s" "$1" | cliphist delete', "delete", item.line])
     }
-    // Borra el historial; los fijados quedan.
+    // Clears history; pins remain.
     function clear() { items = []; Quickshell.execDetached(["cliphist", "wipe"]) }
 
     function isPinned(text) { return pins.indexOf(text) >= 0 }
     function unpin(text) { pins = pins.filter(p => p !== text); savePins() }
-    // El texto de la lista puede venir recortado: se decodifica el original antes de fijarlo.
+    // The list text may be truncated: decode the original before pinning.
     function pin(item) {
         if (item.binary) return
         decoder.command = ["sh", "-c", 'printf "%s" "$1" | cliphist decode', "decode", item.line]
