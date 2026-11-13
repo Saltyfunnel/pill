@@ -1,11 +1,11 @@
 #!/bin/sh
-# Apagar pantalla sin desconectarla: DPMS por software. El monitor queda "conectado" para
-# Hyprland, así las ventanas, escritorios y juegos siguen exactamente donde están.
-# Se vuelve a encender moviendo el mouse o tocando una tecla (misc.*_enables_dpms).
-# Espera ~1 s para que el clic o soltar el atajo no la despierte al instante.
-# Nunca suspende ni bloquea la PC.
+# Turn off screen without disconnecting it: software DPMS. The monitor stays "connected" for
+# Hyprland, so windows, workspaces, and games stay exactly where they are.
+# It turns back on by moving the mouse or pressing a key (misc.*_enables_dpms).
+# Waits ~1 s so that the click or releasing the shortcut doesn't wake it up instantly.
+# Never suspends or locks the PC.
 LOCK="${XDG_RUNTIME_DIR:-/tmp}/island-screen-off.lock"
-# Un solo apagado a la vez (doble clic o atajo repetido).
+# Only one shutdown at a time (double click or repeated shortcut).
 exec 9>"$LOCK"
 flock -n 9 || exit 0
 sleep "${ISLAND_DPMS_DELAY:-1}"
