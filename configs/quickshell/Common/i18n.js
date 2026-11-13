@@ -1,7 +1,7 @@
 .pragma library
-// Diccionarios de la interfaz. La clave es el texto en español (idioma de origen):
-// `es` es la identidad y `en` lo traduce. %1, %2… son argumentos (I18n.tr(texto, a, b)).
-// tests/i18n.test.js comprueba que toda clave usada en el código tenga traducción.
+// Interface dictionaries. The key is the text in Spanish (source language):
+// `es` is the identity and `en` translates it. %1, %2… are arguments (I18n.tr(text, a, b)).
+// tests/i18n.test.js checks that every key used in the code has a translation.
 
 var languages = [{ id: "es", name: "Español", locale: "es_AR" }, { id: "en", name: "English", locale: "en_US" }]
 
@@ -170,7 +170,7 @@ var en = {
     "Sobre la isla compacta, pasa al escritorio anterior o siguiente.": "Over the compact island, switches to the previous or next desktop.",
     "Escape o clic afuera": "Escape or click outside",
     "Cierra el menú o el panel abierto.": "Closes the open menu or panel.",
-    "Para deslizar, arrastrá sobre la isla con el mouse o el panel táctil. Pasar el mouse por arriba la muestra y pausa los avisos.": "To swipe, drag over the island with the mouse or touchpad. Hovering over it shows it and pauses alerts.",
+    "Para deslizar, arrastrá sobre la isla con el mouse o el panel táctil. Pasar el mouse por arriba la muestra y pausa los avisos.": "To swipe, drag over the mouse or touchpad. Hovering over it shows it and pauses alerts.",
     " · Cargada": " · Charged",
     " · Cargando": " · Charging",
     " · Enchufada": " · Plugged in",
@@ -200,7 +200,7 @@ var en = {
     "Buscar atajo o tecla": "Search shortcut or key",
     "Cambiar…": "Change…",
     "Captura": "Screenshot",
-    "Carpeta: ~/Imágenes/Fondos": "Folder: ~/Imágenes/Fondos",
+    "Carpeta: ~/Imágenes/Fondos": "Folder: ~/Pictures/Wallpapers",
     "Cerrar": "Quit",
     "Cerrar sesión": "Log out",
     "Claro": "Light",
@@ -303,7 +303,7 @@ var en = {
     "¿Mantener esta configuración?": "Keep this configuration?",
 }
 
-// Traduce y reemplaza %1…%9 (de mayor a menor, para que %1 no pise %10).
+// Translates and replaces %1…%9 (from highest to lowest so %1 doesn't conflict with %10).
 function translate(lang, s, args) {
     let t = lang === "en" && Object.prototype.hasOwnProperty.call(en, s) ? en[s] : s
     for (let i = args.length; i >= 1; i--) t = t.split("%" + i).join(String(args[i - 1]))
