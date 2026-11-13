@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import "../../Common"
 
-// Buscador de aplicaciones instaladas (DesktopEntries).
+// Installed applications search bar (DesktopEntries).
 Column {
     id: root
     signal launched()
@@ -22,9 +22,9 @@ Column {
     Rectangle {
         id: box
         width: Math.round(parent.width); height: Theme.controlH + 8
-        radius: height / 2               // píldora
-        // Estilo Spotlight: hilo fino semitransparente; con foco, superficie elevada,
-        // borde más marcado y un aro suave alrededor (sin blur ni transparencia del panel).
+        radius: height / 2                   // pill
+        // Spotlight style: fine semi-transparent thread; with focus, raised surface,
+        // sharper border and a soft ring around it (without blur or panel transparency).
         readonly property bool on: field.activeFocus
         color: on ? Theme.raised : Theme.field
         border.width: 1
@@ -44,7 +44,7 @@ Column {
             Behavior on scale { NumberAnimation { duration: Theme.durFast + 80; easing.type: Easing.OutCubic } }
             antialiasing: true
         }
-        // Toda la píldora es clicable: un clic en cualquier parte enfoca el campo.
+        // The entire pill is clickable: a click anywhere focuses the field.
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.IBeamCursor
@@ -65,13 +65,13 @@ Column {
             color: Theme.textPrimary
             selectionColor: Theme.hover
             selectedTextColor: Theme.textPrimary
-            // El cursor "|" solo se dibuja cuando el buscador tiene el foco.
+            // The "|" cursor is only drawn when the search bar has focus.
             cursorDelegate: Rectangle { width: 2; radius: 1; color: Theme.textPrimary; visible: field.activeFocus && field.cursorVisible }
             font.family: Theme.font; font.pixelSize: Theme.fontBody
             clip: true
             Text {
                 visible: !field.text
-                text: I18n.tr("Buscar")
+                text: I18n.tr("Search")
                 color: Theme.textSecondary
                 font: field.font
             }
@@ -86,7 +86,7 @@ Column {
         delegate: Rectangle {
             required property var modelData
             required property int index
-            width: root.width; height: 40; radius: height / 2      // píldora, como el campo y el lanzador
+            width: root.width; height: 40; radius: height / 2      // pill, like the field and launcher
             color: index === root.selected || hov.containsMouse ? Theme.field : "transparent"
             Image {
                 id: ic
@@ -108,7 +108,7 @@ Column {
                 anchors.fill: parent; hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.launch(modelData)
-                onWheel: w => w.accepted = true   // no cambiar de workspace sobre la lista
+                onWheel: w => w.accepted = true   // do not change workspace over the list
             }
         }
     }
