@@ -2,13 +2,13 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../Common"
 
-// Portapapeles dentro de la isla: fijados arriba, historial debajo.
-// Clic en un elemento: lo copia y cierra la isla (pegar con Ctrl+V).
+// Clipboard inside the island: pinned at top, history below.
+// Click an item: copies it and closes the island (paste with Ctrl+V).
 Item {
     id: root
     signal back()
     signal picked()
-    property bool armed: false        // "Borrar" pide un segundo clic
+    property bool armed: false        // "Clear" requires a second click
     implicitHeight: col.implicitHeight
 
     function refresh() { armed = false; Clipboard.refresh() }
@@ -31,7 +31,7 @@ Item {
             }
             Text {
                 anchors.centerIn: parent
-                text: I18n.tr("Portapapeles")
+                text: I18n.tr("Clipboard")
                 color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontHeading; font.weight: Font.DemiBold
             }
             Rectangle {
@@ -40,7 +40,7 @@ Item {
                 width: cl.implicitWidth + 24; height: 32; radius: 16
                 color: root.armed ? Theme.fill : (cm.containsMouse ? Theme.hover : Theme.surface)
                 Behavior on color { ColorAnimation { duration: Theme.durFast } }
-                Text { id: cl; anchors.centerIn: parent; text: root.armed ? I18n.tr("Confirmar") : I18n.tr("Borrar"); color: root.armed ? Theme.onAccent : Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: root.armed ? Font.DemiBold : Font.Normal }
+                Text { id: cl; anchors.centerIn: parent; text: root.armed ? I18n.tr("Confirm") : I18n.tr("Clear"); color: root.armed ? Theme.onAccent : Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: root.armed ? Font.DemiBold : Font.Normal }
                 MouseArea {
                     id: cm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                     onClicked: { if (!root.armed) { root.armed = true; disarm.restart() } else { root.armed = false; Clipboard.clear() } }
@@ -65,7 +65,7 @@ Item {
                 Text {
                     visible: Clipboard.pins.length > 0
                     leftPadding: 14; bottomPadding: 2
-                    text: I18n.tr("Fijados"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold
+                    text: I18n.tr("Pinned"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold
                 }
                 Repeater {
                     model: Clipboard.pins
@@ -83,7 +83,7 @@ Item {
                 Text {
                     visible: Clipboard.pins.length > 0 && root.history.length > 0
                     leftPadding: 14; bottomPadding: 2
-                    text: I18n.tr("Recientes"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold
+                    text: I18n.tr("Recent"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold
                 }
                 Repeater {
                     model: root.history
@@ -106,7 +106,7 @@ Item {
             topPadding: 18; bottomPadding: 18
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
-            text: Clipboard.available ? I18n.tr("Lo que copies aparece acá.") : I18n.tr("Falta cliphist para guardar el historial.")
+            text: Clipboard.available ? I18n.tr("Copied items will appear here.") : I18n.tr("cliphist is required to save history.")
             color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontBody - 1
         }
     }
