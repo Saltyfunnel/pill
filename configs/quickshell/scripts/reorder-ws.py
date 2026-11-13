@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Reordena escritorios moviendo ventanas (sin seguirlas) y deja el foco en el
-# contenido que estaba activo. Uso: reorder-ws.py "1,2,3" "3,1,2" <activo>
+# Reorders workspaces by moving windows (without following them) and leaves focus on the
+# content that was active. Usage: reorder-ws.py "1,2,3" "3,1,2" <active>
 import json, subprocess, sys
 
 def hypr(*a):
@@ -18,7 +18,7 @@ def main():
         wid = (c.get("workspace") or {}).get("id", -1)
         if wid > 0 and c.get("mapped", True):
             by_ws.setdefault(wid, []).append(c["address"])
-    # Direcciones capturadas antes de mover: cada ventana se mueve una sola vez.
+    # Addresses captured before moving: each window is moved only once.
     for i, src in enumerate(order):
         dst = ids[i]
         if src == dst:
