@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# "Liberar memoria": cierra con el cierre normal de Hyprland (como Super+Q) todas las
-# ventanas menos la enfocada. Nunca mata procesos: cada app puede guardar o preguntar.
-# Las apps de bandeja (Steam, Discord) no son ventanas y siguen abiertas.
-# Uso: free-mem.py [--dry-run]. Imprime JSON: { closed, ram, vram } (MiB liberados o null).
+# "Free memory": closes with Hyprland's normal close (like Super+Q) all
+# windows except the focused one. It never kills processes: each app can save or prompt.
+# Tray apps (Steam, Discord) are not windows and remain open.
+# Usage: free-mem.py [--dry-run]. Prints JSON: { closed, ram, vram } (freed MiB or null).
 import json, shutil, subprocess, sys, time
 
 def hypr(*a):
@@ -37,7 +37,7 @@ def main():
                if c.get("mapped", True) and c.get("address") != active]
     targets = [c["address"] for c in clients]
     if dry:
-        # Para la confirmación del panel: qué apps se cierran y cuánta RAM usa cada una.
+        # For panel confirmation: which apps are closed and how much RAM each uses.
         apps = {}
         for c in clients:
             name = c.get("class") or c.get("title") or "?"
@@ -47,7 +47,7 @@ def main():
     r0, v0 = ram_avail(), vram_used()
     for a in targets:
         hypr("dispatch", 'hl.dsp.window.close({ window = "address:%s" })' % a)
-    if targets: time.sleep(2.5)          # dar tiempo a que las apps terminen de cerrar
+    if targets: time.sleep(2.5)          # give apps time to finish closing
     r1, v1 = ram_avail(), vram_used()
     ram = max(0, r1 - r0) if r0 is not None and r1 is not None else None
     vram = max(0, v0 - v1) if v0 is not None and v1 is not None else None
