@@ -1,15 +1,16 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import Quickshell.Services.Mpris
 import "../../Common"
 
-// Reproductor MPRIS: carátula, título/artista, controles de línea y progreso.
+// MPRIS player: cover art, title/artist, line controls, and progress bar.
 Item {
     id: root
     readonly property var players: Mpris.players.values
-    // Reproductor activo, reactivo a Mpris.players: primero el que suena; si no, uno en
-    // pausa con título. Se ignoran entradas "fantasma" (apps Chromium/Electron que dejan un
-    // MPRIS detenido y sin metadatos al cerrar la pestaña/medio) y el proxy playerctld.
+    // Active player, reactive to Mpris.players: first the one playing; otherwise, one in
+    // pause with title. Ignore "ghost" entries (Chromium/Electron apps that leave an
+    // MPRIS stopped and without metadata when closing the tab/media) and the playerctld proxy.
     function usable(p) {
         if (!p || (p.dbusName || "").indexOf("playerctld") >= 0) return false
         if (p.isPlaying) return true
@@ -29,7 +30,7 @@ Item {
         onTriggered: root.player.positionChanged()
     }
 
-    // Carátula circular (recorte real con máscara), gira como un vinilo al reproducir.
+    // Circular cover art (real clipping with mask), spins like a vinyl when playing.
     Item {
         id: art
         width: Theme.space8 + Theme.space4; height: Theme.space8 + Theme.space4
@@ -39,13 +40,13 @@ Item {
 
         NumberAnimation {
             target: art; property: "angle"
-            // Solo gira al reproducir; con reduceMotion queda fija (menos CPU en idle del menú).
+            // Only spins when playing; with reduceMotion it stays fixed (less menu idle CPU).
             running: root.visible && root.player !== null && art.hasArt && root.player.isPlaying && !Theme.reduceMotion
             from: art.angle; to: art.angle + 360
             duration: 8000; loops: Animation.Infinite
         }
 
-        // Fallback: círculo gris claro con ícono de nota.
+        // Fallback: light gray circle with note icon.
         Rectangle {
             anchors.fill: parent
             radius: width / 2
@@ -54,8 +55,8 @@ Item {
             Icon { anchors.centerIn: parent; name: "music"; tone: "gray"; size: Theme.iconSm + 4 }
         }
 
-        // La carátula gira DENTRO de una capa (a 2x); la máscara circular no gira.
-        // Así el borde lo define solo la máscara suavizada: sin aro, sin dientes, sin halo.
+        // The cover art spins INSIDE a layer (at 2x); the circular mask does not spin.
+        // Thus the border is defined solely by the smoothed mask: no ring, no jaggies, no halo.
         Item {
             id: coverLayer
             anchors.fill: parent
@@ -96,7 +97,7 @@ Item {
             maskThresholdMin: 0.5
             maskSpreadAtMin: 1.0
         }
-        // Agujero central sutil, como un disco.
+        // Subtle central hole, like a record.
         Rectangle {
             anchors.centerIn: parent
             width: 7; height: 7; radius: 3.5
@@ -113,7 +114,7 @@ Item {
         spacing: 2
         Text {
             width: parent.width; elide: Text.ElideRight
-            text: root.player ? (root.player.trackTitle || I18n.tr("Sin título")) : ""
+            text: root.player ? (root.player.trackTitle || I18n.tr("Untitled")) : ""
             color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel; font.weight: Font.DemiBold
         }
         Text {
