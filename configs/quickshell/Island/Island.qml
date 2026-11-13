@@ -209,4 +209,121 @@ PanelWindow {
     // Soft, diffuse shadow behind the card (does not clip, does not receive input).
     Rectangle {
         id: shadowSrc
-        x: pill.x; y:
+        x: pill.x; y: pill.y; width: pill.width; height: pill.height
+        radius: pill.radius
+        color: Theme.card
+        Behavior on color { ColorAnimation { duration: Theme.durColor } }
+        opacity: win.shown ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Theme.shadow
+            shadowBlur: 0.85
+            blurMax: 20
+            shadowVerticalOffset: 6
+            autoPaddingEnabled: true
+        }
+    }
+
+    Rectangle {
+        id: pill
+        // Elastic: while dragging, pill stretches and shifts slightly with finger.
+        readonly property real pull: hoverZone.pulling ? hoverZone.dragDy / (1 + hoverZone.dragDy / 70) : 0
+        readonly property real rubber: hoverZone.dragging ? hoverZone.dragDx / (1 + Math.abs(hoverZone.dragDx) / 60) : 0
+        width: win.expanded ? Theme.expandedW
+             : win.panel ? Theme.expandedW
+             : Math.max(Theme.compactW, compact.implicitWidth + Theme.compactPadX * 2) + Math.abs(rubber) * 1.2
+        height: win.expanded ? Math.min(menu.implicitHeight, Theme.maxExpandedH)
+              : win.panel ? Math.min(win.panelKind === "apps" ? apps.implicitHeight : status.implicitHeight, Theme.maxExpandedH)
+              : compact.implicitHeight + pull * 0.65   // pulling down: stretches and drops slightly
+        x: (win.width - width) / 2 + rubber * 0.5
+        y: win.shown ? Theme.topMargin + pull * 0.35 : -height - 64
+        radius: Math.min(height / 2, Theme.radiusCard)
+        color: Theme.card
+        Behavior on color { ColorAnimation { duration: Theme.durColor } }
+        clip: true
+
+        // Elastic bounce only on open/close. With island already open (page change: calendar,
+        // clipboard...) size change is a smooth slide without bounce.
+        property bool settled: false
+        Timer { id: settleTimer; interval: Theme.durNormal + 80; onTriggered: pill.settled = win.open }
+        Connections { target: win; function onOpenChanged() { pill.settled = false; if (win.open) settleTimer.restart() } }
+        Behavior on width { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutBack; easing.overshoot: pill.settled ? 0 : 0.9 } }
+        // During pull, pill follows finger without lag (animation returns on release).
+        Behavior on height { enabled: !hoverZone.pulling; NumberAnimation { duration: Theme.durNormal + 40; easing.type: Easing.OutBack; easing.overshoot: pill.settled ? 0 : 0.7 } }
+        Behavior on y { enabled: !hoverZone.pulling; NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+
+        focus: win.open
+        // Escape in a subpage (workspaces, clipboard, calendar...) returns to menu;
+        // in main menu closes the island.
+        Keys.onEscapePressed: { if (win.expanded && menu.page !== "menu") menu.page = "menu"; else win.collapse() }
+
+        IslandCompact {
+            id: compact
+            anchors.horizontalCenter: parent.horizontalCenter
+            // with preview grows downwards from top; otherwise, centered (pull included)
+            y: compact.hasShot ? 0 : (parent.height - height) / 2
+            active: win.shown && !win.open
+            opacity: win.open ? 0 : 1
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+        }
+
+        IslandMenu {
+            id: menu
+            width: Theme.expandedW
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            open: win.expanded
+            opacity: win.expanded ? 1 : 0
+            visible: opacity > 0
+            enabled: win.expanded
+            Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+            onDone: win.collapse()
+        }
+
+        StatusPanel {
+            id: status
+            width: Theme.expandedW
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            open: win.panel && win.panelKind === "status"
+            opacity: win.panel && win.panelKind === "status" ? 1 : 0
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+        }
+        AppsPanel {
+            id: apps
+            width: Theme.expandedW
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            open: win.panel && win.panelKind === "apps"
+            opacity: win.panel && win.panelKind === "apps" ? 1 : 0
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+        }
+    }
+
+    // External control (ipc "island"): show/hide/open/close.
+    Connections {
+        target: IslandBus
+        function onIslandCommand(cmd) {
+            if (cmd === "show") { win.shown = true; hideTimer.stop() }
+            else if (cmd === "hide") { win.expanded = false; win.shown = false }
+            else if (cmd === "open") win.expanded = true
+            else if (cmd === "toggle") { if (win.open) win.collapse(); else { win.panel = false; win.expanded = true } }
+            else if (cmd === "clipboard") {
+                // Super+V: opens island on clipboard (or closes if already there).
+                if (win.expanded && menu.page === "clip") win.collapse()
+                else { win.panel = false; win.expanded = true; menu.showClipboard() }
+            }
+            else if (cmd === "close") win.collapse()
+            else if (cmd === "status" || cmd === "apps") {
+                // If the other panel is already open, switch to this one instead of closing.
+                win.panel = !(win.panel && win.panelKind === cmd)
+                win.panelKind = cmd
+            }
+        }
+    }
+}
