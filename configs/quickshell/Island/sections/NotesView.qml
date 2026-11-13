@@ -2,12 +2,12 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../Common"
 
-// Notas dentro de la isla: lista (título = primera línea) y editor.
-// Se guardan solas (Notes, ~/.config/island-shell/notes.json); "Eliminar" pide confirmación.
+// Notes inside the island: list (title = first line) and editor.
+// Self-saving (Notes, ~/.config/island-shell/notes.json); "Delete" requires confirmation.
 Item {
     id: root
     signal back()
-    property string editing: ""        // id de la nota abierta ("" = lista)
+    property string editing: ""            // id of open note ("" = list)
     property bool armed: false
     implicitHeight: col.implicitHeight
 
@@ -42,7 +42,7 @@ Item {
             RoundButton { icon: "back"; onClicked: root.goBack() }
             Text {
                 anchors.centerIn: parent
-                text: I18n.tr("Notas")
+                text: I18n.tr("Notes")
                 color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontClock; font.weight: Font.DemiBold
             }
             RoundButton { anchors.right: parent.right; visible: root.editing === ""; icon: "plus"; onClicked: root.open(Notes.create()) }
@@ -52,7 +52,7 @@ Item {
                 width: dl.implicitWidth + 24; height: 32; radius: 16
                 color: root.armed ? Theme.danger : (dm.containsMouse ? Theme.hover : Theme.surface)
                 Behavior on color { ColorAnimation { duration: Theme.durFast } }
-                Text { id: dl; anchors.centerIn: parent; text: root.armed ? I18n.tr("Confirmar") : I18n.tr("Eliminar"); color: root.armed ? "#FFFFFF" : Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: root.armed ? Font.DemiBold : Font.Normal }
+                Text { id: dl; anchors.centerIn: parent; text: root.armed ? I18n.tr("Confirm") : I18n.tr("Delete"); color: root.armed ? "#FFFFFF" : Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: root.armed ? Font.DemiBold : Font.Normal }
                 MouseArea {
                     id: dm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                     onClicked: {
@@ -63,12 +63,12 @@ Item {
             }
         }
 
-        // Lista.
+        // List.
         Text {
             visible: root.editing === "" && Notes.notes.length === 0
             width: parent.width; topPadding: 24; bottomPadding: 24
             horizontalAlignment: Text.AlignHCenter
-            text: I18n.tr("Sin notas. Hacé clic en + para escribir una.")
+            text: I18n.tr("No notes. Click + to write one.")
             color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
         }
         Flickable {
@@ -99,7 +99,7 @@ Item {
                                 spacing: 2
                                 Text {
                                     width: parent.width; elide: Text.ElideRight; textFormat: Text.PlainText
-                                    text: Notes.title(nr.modelData.text) || I18n.tr("Nota nueva")
+                                    text: Notes.title(nr.modelData.text) || I18n.tr("New note")
                                     color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontBody; font.weight: Font.Medium
                                 }
                                 Text {
@@ -123,7 +123,7 @@ Item {
             }
         }
 
-        // Editor (texto plano; se guarda solo).
+        // Editor (plain text; self-saving).
         Rectangle {
             visible: root.editing !== ""
             width: parent.width; height: visible ? 300 : 0; radius: 18
@@ -151,7 +151,7 @@ Item {
                 }
                 Text {
                     visible: editor.text === ""
-                    text: I18n.tr("Escribí algo…")
+                    text: I18n.tr("Write something…")
                     color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontBody
                 }
             }
