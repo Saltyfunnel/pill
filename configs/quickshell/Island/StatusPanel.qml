@@ -570,4 +570,8 @@ Item {
                 value: SysStatus.gpu ? SysStatus.gpu.util + "%" : ""
                 hoverValue: SysStatus.gpu ? SysStatus.gpu.temp + " °C" : ""
                 bad: !!SysStatus.gpu && SysStatus.gpu.temp >= 85
-            }
+}
+}
+}
+}
+}
