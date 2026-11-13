@@ -1,7 +1,7 @@
 import QtQuick
 import "../Common"
 
-// Indicador sutil de workspaces: puntos, el activo en negro. Se desvanece a ~1 s.
+// Subtle workspace indicator: dots, the active one highlighted. Fades out after ~1s.
 Row {
     id: root
     spacing: 4
