@@ -1,5 +1,5 @@
 {
-  "_comentario": "Mapa central de iconos: nombre en el shell -> carpeta de Fluent UI System Icons (estilo Filled). build.py genera dark/ gray/ graydark/ white/ a partir de fluent/.",
+  "_comentario": "Central icon map: shell name -> Fluent UI System Icons folder (Filled style). build.py generates dark/ gray/ graydark/ white/ from fluent/.",
   "apps": "Apps",
   "back": "Chevron Left",
   "battery": "Battery 10",
