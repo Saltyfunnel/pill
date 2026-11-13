@@ -1,7 +1,7 @@
 import QtQuick
 import "../../Common"
 
-// Cuatro barritas de señal (0..100).
+// Four signal strength bars (0..100).
 Row {
     id: sb
     property int signal: 0
