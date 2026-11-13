@@ -3,7 +3,7 @@ import Quickshell
 import "../Common"
 import "sections"
 
-// Menú de la isla expandida: compone las secciones con entrada escalonada.
+// Expanded island menu: composes sections with staggered entrance.
 Item {
     id: root
     signal done()
@@ -14,17 +14,17 @@ Item {
 
     function showClipboard() { clip.refresh(); page = "clip" }
 
-    // El buscador no se enfoca solo: se activa al hacerle clic.
+    // Search bar does not focus automatically: it activates on click.
     function opened() { search.reset() }
 
-    // Entrada escalonada: stage sube de a uno cada 45 ms al abrir.
+    // Staggered entrance: stage increases by one every 45 ms on open.
     property int stage: 0
     Timer {
         id: stagger; interval: Theme.durStagger || 1; repeat: true
         running: root.open && root.stage < 6 && Theme.durStagger > 0
         onTriggered: root.stage++
     }
-    // Con reduceMotion, mostrar todo de golpe (sin escalonado).
+    // With reduceMotion, show everything at once (no staggering).
     onOpenChanged: {
         if (open && Theme.durStagger === 0) stage = 6
         if (!open) { stage = 0; page = "menu"; actions.reset(); notes.reset(); emoji.reset() }
@@ -64,7 +64,7 @@ Item {
                         font.pixelSize: Theme.fontTitle; font.weight: Font.Medium
                         font.features: { "tnum": 1 }
                     }
-                    // Clic en la fecha → calendario.
+                    // Click on date → calendar.
                     Text {
                         text: I18n.longDate(clock.date)
                         color: dateMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
@@ -78,8 +78,8 @@ Item {
             SearchSection { id: search; width: parent.width; onLaunched: root.done() } }
         Reveal { step: 2; width: parent.width; height: media.implicitHeight; visible: media.player !== null
             MediaSection { id: media; width: parent.width } }
-        // La visibilidad se decide con los datos, NO con `pinned.visible`: el `visible` de un hijo
-        // es false mientras el menú está oculto, y atarlo al padre lo dejaba en false para siempre.
+        // Visibility is determined by data, NOT by `pinned.visible`: a child's `visible`
+        // is false while the menu is hidden, and binding it to the parent left it false forever.
         Reveal { step: 3; width: parent.width; height: pinned.implicitHeight
             visible: QuickItems.pinnedSliders.length + QuickItems.pinnedButtons.length > 0
             PinnedSection { id: pinned; width: parent.width
