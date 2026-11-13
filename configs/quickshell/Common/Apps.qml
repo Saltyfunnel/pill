@@ -2,9 +2,9 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
-// Búsqueda de aplicaciones instaladas, compartida por la isla y el lanzador.
+// Installed applications search, shared by the island and the launcher.
 Singleton {
-    // Devuelve hasta `limit` DesktopEntry ordenadas: empieza con > contiene > genérico/keywords.
+    // Returns up to `limit` sorted DesktopEntries: starts with > contains > generic/keywords.
     function search(query, limit) {
         const q = (query || "").trim().toLowerCase()
         if (q === "") return []
