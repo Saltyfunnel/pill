@@ -1,14 +1,14 @@
-// Selector de emojis: lógica pura (se prueba con node en tests/emoji.test.js).
 .pragma library
+// Emoji picker: pure logic (tested with node in tests/emoji.test.js).
 
 var TONES = ["", "\u{1F3FB}", "\u{1F3FC}", "\u{1F3FD}", "\u{1F3FE}", "\u{1F3FF}"]
 
-// Minúsculas y sin tildes, para buscar "cafe" y encontrar "café".
+// Lowercase and accentless, to search for "cafe" and find "café".
 function norm(s) {
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
 }
 
-// emoji.json → [{ id, label, icon, items: [{ e, name, key, tone }] }] en el idioma pedido.
+// emoji.json → [{ id, label, icon, items: [{ e, name, key, tone }] }] in the requested language.
 function parse(text, lang) {
     var d
     try { d = JSON.parse(text) } catch (e) { return [] }
@@ -24,7 +24,7 @@ function parse(text, lang) {
     })
 }
 
-// Busca en los nombres en español e inglés (todas las palabras deben aparecer). Máx. `limit`.
+// Searches Spanish and English names (all words must appear). Max `limit`.
 function search(cats, query, limit) {
     var words = norm(query).split(/\s+/).filter(function (w) { return w })
     if (words.length === 0) return []
@@ -40,22 +40,22 @@ function search(cats, query, limit) {
     return out
 }
 
-// Tono de piel: el modificador va justo después del primer código (y sin el selector
-// de variación U+FE0F, que el modificador reemplaza: ✌️ + 🏽 → ✌🏽).
+// Skin tone: the modifier goes right after the first code (and without the variation
+// selector U+FE0F, which the modifier replaces: ✌️ + 🏽 → ✌🏽).
 function withTone(e, tone) {
     var t = TONES[tone] || ""
     if (!t) return e
-    // Sin Array.from: el motor JS de Qt 6.8 itera por unidades UTF-16 y partía los pares sustitutos.
+    // Without Array.from: the Qt 6.8 JS engine iterates by UTF-16 code units and splits surrogate pairs.
     var first = String.fromCodePoint(e.codePointAt(0))
     var rest = e.slice(first.length)
     if (rest.charAt(0) === "\uFE0F") rest = rest.slice(1)
     return first + t + rest
 }
 
-// Texto exacto que se copia para un elemento.
+// Exact text copied for an item.
 function textFor(item, tone) { return item.tone ? withTone(item.e, tone) : item.e }
 
-// Solo para dibujar: Qt 6.8 parte en dos las secuencias ZWJ que llevan U+FE0F antes del
-// U+200D (🏳️‍🌈 → 🏳 + 🌈); sin ese selector, la fuente de emojis las une igual. Lo copiado
-// siempre es la secuencia completa (textFor), nunca esta.
+// Drawing only: Qt 6.8 splits ZWJ sequences that carry U+FE0F before
+// U+200D (🏳️‍🌈 → 🏳 + 🌈); without that selector, the emoji font joins them anyway. The copied text
+// is always the complete sequence (textFor), never this.
 function glyph(s) { return String(s).replace(/\uFE0F\u200D/g, "\u200D") }
