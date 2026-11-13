@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# Batería para la isla. "once": imprime un JSON (o null si no hay batería) y sale.
-# "watch": imprime un JSON por cambio, por eventos de UPower (upower --monitor); sin
-# upower, revisa cada 60 s. Solo se lanza si hay batería, así que en PCs de escritorio no
-# cuesta nada. Simulador: si existe ~/.cache/island-shell/fake-battery.json se usa ese archivo
-# (scripts/fake-laptop.sh lo escribe y avisa a la shell); si no existe, no hace nada.
-# Línea extra: {"backlight": bool} indica si hay brillo real (/sys/class/backlight + brightnessctl).
+# Battery for the island. "once": prints a JSON (or null if there is no battery) and exits.
+# "watch": prints a JSON per change, via UPower events (upower --monitor); without
+# upower, checks every 60 s. Only runs if there is battery, so on desktop PCs it
+# costs nothing. Simulator: if ~/.cache/island-shell/fake-battery.json exists, that file is used
+# (scripts/fake-laptop.sh writes it and notifies the shell); if it doesn't exist, it does nothing.
+# Extra line: {"backlight": bool} indicates if there is real brightness (/sys/class/backlight + brightnessctl).
 import json, os, shutil, subprocess, sys, time
 
 FAKE = os.path.expanduser("~/.cache/island-shell/fake-battery.json")
@@ -57,7 +57,7 @@ def main():
         if b != last: last = b; out(b)
     emit()
     if os.path.exists(FAKE):
-        while True: time.sleep(3600)      # el simulador avisa con "laptop rescan"
+        while True: time.sleep(3600)      # the simulator notifies with "laptop rescan"
     if shutil.which("upower"):
         p = subprocess.Popen(["upower", "--monitor"], stdout=subprocess.PIPE, text=True)
         for _ in p.stdout: emit()
