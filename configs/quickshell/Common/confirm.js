@@ -1,9 +1,9 @@
 .pragma library
-// Máquina de estados de las acciones de energía (una sola para todas):
-//   reposo --clic A--> armado(A) --clic A (< armMs)--> ejecuta A una vez --> reposo
-//   armado(A) --clic B--> armado(B)   (nunca hay dos armadas a la vez)
-//   tras ejecutar, se ignoran clics durante guardMs (doble clic / clics rápidos).
-// Funciones puras: reciben el estado y devuelven { state, run } (run = id a ejecutar o "").
+// State machine for power actions (single state for all):
+//    idle --click A--> armed(A) --click A (< armMs)--> executes A once --> idle
+//    armed(A) --click B--> armed(B)   (never two armed at the same time)
+//    after execution, clicks are ignored for guardMs (double click / rapid clicks).
+// Pure functions: receive the state and return { state, run } (run = id to execute or "").
 
 function initial() { return { armed: "", armedAt: 0, firedAt: -1e15 } }
 
