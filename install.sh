@@ -281,7 +281,7 @@ fi
 print_phase "Installing packages"
 
 CORE=(hyprland hyprpaper xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-      polkit-kde-agent qt6-5compat qt6-declarative qt6-svg qt5-wayland qt6-wayland PyQt6
+      polkit-kde-agent qt6-5compat qt6-declarative qt6-svg qt5-wayland qt6-wayland python-pyqt6
       mako)
 LOGIN=(sddm hyprlock)
 AUDIO=(pipewire pipewire-pulse pipewire-alsa wireplumber playerctl pavucontrol)
