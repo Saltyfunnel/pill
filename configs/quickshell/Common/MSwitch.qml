@@ -1,6 +1,6 @@
 import QtQuick
 
-// Interruptor estilo iOS (negro encendido, gris apagado).
+// iOS-style switch (black on, gray off).
 Item {
     id: sw
     property bool checked: false
@@ -20,7 +20,7 @@ Item {
         radius: height / 2
         color: sw.checked ? Theme.fill : Theme.track
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
-        // Aro de foco por teclado
+        // Keyboard focus ring
         Rectangle {
             anchors.fill: parent; anchors.margins: -3; radius: height / 2
             color: "transparent"; border.width: 2; border.color: Theme.fill
@@ -36,7 +36,7 @@ Item {
             Behavior on x { NumberAnimation { duration: Theme.durFast; easing.type: Easing.OutCubic } }
         }
     }
-    // Área clicable ampliada (≥ hitMin en altura táctil)
+    // Enlarged clickable area (≥ hitMin in touch height)
     MouseArea {
         anchors.fill: parent
         anchors.margins: -((Theme.hitMin - parent.height) / 2)
