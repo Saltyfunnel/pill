@@ -3,14 +3,13 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Visual tokens. Claro (blanco, estilo iOS) u oscuro (casi negro, estilo
-// Apple). Todo color de la shell sale de acá; los
-// cambios de tema los animan los consumidores (~250 ms).
-// Sin dependencias a otros singletons: DisplayState empuja `dark` acá.
+// Visual tokens. Light (white, iOS style) or dark (near black, Apple style).
+// All shell colors come from here; theme changes are animated by consumers (~250ms).
+// No dependencies on other singletons: DisplayState pushes `dark` here.
 Singleton {
     id: t
     readonly property bool dark: true
-    property bool reduceMotion: false       // accessibility: no UI transitions
+    property bool reduceMotion: false         // accessibility: no UI transitions
     property bool highContrast: false
 
     // ---- matugen colours ----
@@ -73,14 +72,14 @@ Singleton {
     readonly property color recording: "#FF453A"
     readonly property color shadow: Qt.rgba(0, 0, 0, 0.45)
 
-    // Radios por tipo de componente
+    // Radii by component type
     readonly property int radiusCard: 28
     readonly property int radiusField: 12
     readonly property int radiusChip: 16
     readonly property int radiusPill: 20
     readonly property int radiusCircle: 999
 
-    // Escala de espaciado (múltiplos de 4)
+    // Spacing scale (multiples of 4)
     readonly property int space1: 4
     readonly property int space2: 8
     readonly property int space3: 12
@@ -88,13 +87,13 @@ Singleton {
     readonly property int space5: 20
     readonly property int space6: 24
     readonly property int space8: 32
-    readonly property int padPanel: 20          // margen interno de paneles de la isla
-    readonly property int padSection: 18        // margen de tarjetas en Ajustes
-    readonly property int padRow: 16            // filas de ajustes / switches
+    readonly property int padPanel: 20          // inner margin of island panels
+    readonly property int padSection: 18        // card margin in Settings
+    readonly property int padRow: 16            // settings rows / switches
 
-    // Tipografía
+    // Typography
     readonly property string font: "Hack Nerd Font"
-    readonly property string emojiFont: "Noto Color Emoji"   // noto-fonts-emoji (install.sh); solo en el selector de emojis
+    readonly property string emojiFont: "Noto Color Emoji"   // noto-fonts-emoji (install.sh); emoji picker only
     readonly property int fontTitle: 26
     readonly property int fontHeading: 17
     readonly property int fontBody: 14
@@ -103,46 +102,46 @@ Singleton {
     readonly property real lineBody: 1.25
     readonly property real lineCaption: 1.15
 
-    // Iconos
+    // Icons
     readonly property int iconSm: 16
     readonly property int iconMd: 22
     readonly property int iconLg: 28
-    readonly property int hitMin: 44           // área clicable mínima recomendada
+    readonly property int hitMin: 44            // recommended minimum clickable area
 
-    // Controles equivalentes
+    // Equivalent controls
     readonly property int controlH: 32
     readonly property int menuBtnSize: 80
     readonly property int menuBtnCircle: 52
 
-    // Animaciones centralizadas
+    // Centralized animations
     readonly property int durFast: reduceMotion ? 0 : 160
-    readonly property int durHover: 300          // pausa antes de mostrar detalles al pasar el mouse
+    readonly property int durHover: 300           // pause before showing details on hover
     readonly property int durNormal: reduceMotion ? 0 : 360
     readonly property int durOpen: reduceMotion ? 0 : 360
     readonly property int durClose: reduceMotion ? 0 : 280
-    readonly property int hideDelay: 900   // margen para salir un instante con el puntero sin que la isla se esconda
+    readonly property int hideDelay: 900   // margin to step out with pointer without hiding the island
     readonly property int easeOpen: Easing.OutBack
     readonly property int easeClose: Easing.OutCubic
     readonly property int easeInOut: Easing.InOutCubic
     readonly property real overshootOpen: 0.45
     readonly property real overshootClose: 0.35
 
-    // Tokens de la ronda 2 (aplicados en Ajustes / isla / tipografía compacta)
-    readonly property int sidebarW: 200       // barra lateral de Ajustes (ronda 2 P2)
+    // Round 2 tokens (applied in Settings / island / compact typography)
+    readonly property int sidebarW: 200         // Settings sidebar (round 2 P2)
     readonly property color knob: "#FFFFFF"
-    readonly property int radiusSection: 20     // tarjetas de sección en Ajustes
-    readonly property int fontClock: 15         // reloj de la isla compacta
-    readonly property int fontLabel: 13         // etiquetas de filas / metadatos
-    readonly property int rowH: 56              // fila de ajustes con control a la derecha
-    readonly property int fieldH: 40            // campos y desplegables
-    readonly property int durColor: reduceMotion ? 0 : 250   // cambio de tema / color de superficie
-    readonly property int durMicro: reduceMotion ? 0 : 120   // microfeedback (hover corto)
-    readonly property int durStagger: reduceMotion ? 0 : 45  // escalonado de entrada del menú
+    readonly property int radiusSection: 20     // section cards in Settings
+    readonly property int fontClock: 15         // compact island clock
+    readonly property int fontLabel: 13         // row labels / metadata
+    readonly property int rowH: 56              // settings row with control on the right
+    readonly property int fieldH: 40            // fields and dropdowns
+    readonly property int durColor: reduceMotion ? 0 : 250   // theme change / surface color
+    readonly property int durMicro: reduceMotion ? 0 : 120   // microfeedback (short hover)
+    readonly property int durStagger: reduceMotion ? 0 : 45  // menu entry stagger
 
     readonly property int compactW: 96
     readonly property int compactH: 36
     readonly property int expandedW: 400
     readonly property int maxExpandedH: 900
-    readonly property int topMargin: 8          // separación de la isla con el borde superior
-    readonly property int compactPadX: 11       // margen lateral de la isla compacta (proporción previa)
+    readonly property int topMargin: 8          // separation between island and top edge
+    readonly property int compactPadX: 11       // lateral margin of compact island (previous proportion)
 }
