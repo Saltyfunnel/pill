@@ -3,8 +3,8 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Abre el navegador / gestor de archivos predeterminados (scripts/open-default.sh).
-// No bloquea: si falla, `error` lleva un mensaje corto que la isla muestra unos segundos.
+// Opens the default browser / file manager (scripts/open-default.sh).
+// Non-blocking: if it fails, `error` carries a short message that the island displays for a few seconds.
 Singleton {
     id: root
     property string error: ""
@@ -13,7 +13,7 @@ Singleton {
     readonly property string script: Qt.resolvedUrl("../scripts/open-default.sh").toString().replace("file://", "")
 
     function open(kind) {
-        if (proc.running) return          // un lanzamiento a la vez
+        if (proc.running) return          // one launch at a time
         error = ""; pending = kind
         proc.command = [root.script, kind]
         proc.running = true
@@ -23,7 +23,7 @@ Singleton {
         stderr: StdioCollector { id: err }
         onExited: code => {
             if (code === 0) root.launched()
-            else { root.error = root.pending === "files" ? I18n.tr("No se pudo abrir el gestor de archivos.") : I18n.tr("No se pudo abrir el navegador."); clear.restart() }
+            else { root.error = root.pending === "files" ? I18n.tr("Could not open the file manager.") : I18n.tr("Could not open the browser."); clear.restart() }
             root.pending = ""
         }
     }
