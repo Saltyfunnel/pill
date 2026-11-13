@@ -4,48 +4,48 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 
-// Workspaces de Hyprland (sintaxis de dispatch Lua de Hyprland 0.56).
+// Hyprland workspaces (Hyprland 0.56 Lua dispatch syntax).
 Singleton {
     id: root
     readonly property var list: Hyprland.workspaces.values.filter(w => w.id > 0).sort((a, b) => a.id - b.id)
     readonly property int activeId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1
-    property real lastSwitch: 0      // para el indicador de puntos (reloj monotónico)
+    property real lastSwitch: 0      // for the dot indicator (monotonic clock)
     property real lastWheel: 0
     property real wheelAcc: 0
     property real wheelT: 0
 
-    // Reloj monotónico: Date.now() se rompe si NTP/RTC salta al arrancar.
+    // Monotonic clock: Date.now() breaks if NTP/RTC jumps on startup.
     ElapsedTimer { id: monoClock }
     Component.onCompleted: monoClock.restart()
     function monoNow() { return monoClock.elapsedMs() }
 
     function dispatchWs(target) {
-        // Hyprland.dispatch() no entiende la sintaxis Lua: se usa hyprctl.
-        // Quickshell 0.3.2: execDetached no lanzaba el proceso; se usa un Process propio.
+        // Hyprland.dispatch() does not understand Lua syntax: use hyprctl.
+        // Quickshell 0.3.2: execDetached didn't launch the process; use a dedicated Process.
         wsProc.running = false
         wsProc.command = ["hyprctl", "dispatch", "hl.dsp.focus({workspace=\"" + target + "\"})"]
         wsProc.running = true
         lastSwitch = monoNow()
     }
-    // Una muesca de rueda = un workspace (con enfriamiento).
+    // One wheel notch = one workspace (with cooldown).
     function wheel(deltaY) {
         const now = monoNow()
         if (deltaY === 0) return
-        // Touchpads mandan muchos deltas chicos: se acumulan hasta una "muesca" (120)
-        // para que un roce accidental no cambie de escritorio. Pausa o cambio de sentido: reinicia.
+        // Touchpads send many small deltas: accumulate them up to a "notch" (120)
+        // so an accidental brush doesn't change workspaces. Pause or direction change: reset.
         const sinceT = now - wheelT
         if (sinceT < 0 || sinceT > 300 || (wheelAcc > 0) !== (deltaY > 0)) wheelAcc = 0
         wheelT = now
         wheelAcc += deltaY
         const sinceLast = now - lastWheel
-        // Solo enfriar si el delta monotónico está en [0, 220). Negativo/absurdo no bloquea.
+        // Only cool down if the monotonic delta is in [0, 220). Negative/absurd values don't block.
         if (Math.abs(wheelAcc) < 120 || (sinceLast >= 0 && sinceLast < 220)) return
         lastWheel = now
         wheelAcc = 0
         dispatchWs(deltaY > 0 ? "r-1" : "r+1")
     }
-    // Reordenar: `order` es la nueva secuencia de IDs; el contenido del escritorio que
-    // quedó en la posición i pasa al ID i-ésimo original. Ignora si ya hay uno en curso.
+    // Reorder: `order` is the new sequence of IDs; the workspace content that
+    // ended up at position i goes to the original i-th ID. Ignores if one is already in progress.
     function reorder(order) {
         const ids = list.map(w => w.id)
         if (reorderProc.running || order.length !== ids.length || order.every((id, i) => id === ids[i])) { reordered(); return }
@@ -54,7 +54,7 @@ Singleton {
         reorderProc.running = true
         lastSwitch = monoNow()
     }
-    // Sin lectores de stdout/stderr el proceso no llegaba a ejecutar hyprctl (Quickshell 0.3.2).
+    // Without stdout/stderr readers the process failed to execute hyprctl (Quickshell 0.3.2).
     Process {
         id: wsProc
         stdout: StdioCollector {}
@@ -62,9 +62,9 @@ Singleton {
     }
     signal reordered()
     Process { id: reorderProc; onExited: { Hyprland.refreshWorkspaces(); Hyprland.refreshToplevels(); root.reordered() } }
-    // Compactar: al quedar vacío un escritorio (ventana cerrada o movida, o al salir de uno
-    // vacío) se corren los siguientes para no dejar huecos. Solo por eventos, sin sondeo;
-    // una ejecución por ráfaga.
+    // Compact: when a workspace becomes empty (window closed or moved, or exiting an
+    // empty one), the subsequent ones shift left to leave no gaps. Event-driven only, no polling;
+    // one execution per burst.
     Connections {
         target: Hyprland
         function onRawEvent(ev) {
