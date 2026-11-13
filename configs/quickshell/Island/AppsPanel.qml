@@ -3,9 +3,9 @@ import Quickshell
 import Quickshell.Services.SystemTray
 import "../Common"
 
-// Panel "En segundo plano" (deslizar la isla de derecha a izquierda): las apps de la
-// bandeja del sistema (Steam, Discord…), como los iconos ocultos de Windows 11.
-// Clic = pedir Activate y, si la app lo ignora, enfocar su ventana o relanzarla (ver scripts/tray-open.py).
+// "Background" panel (swiping the island from right to left): system tray apps
+// (Steam, Discord...), like the hidden icons of Windows 11.
+// Click = request Activate and, if the app ignores it, focus its window or relaunch (see scripts/tray-open.py).
 Item {
     id: root
     property bool open: false
@@ -13,11 +13,11 @@ Item {
 
     onOpenChanged: { menuFor = null }
 
-    // Menú contextual (clic derecho): el de la propia app, dentro del panel. Uno a la vez.
+    // Context menu (right click): the app's own menu, inside the panel. One at a time.
     property var menuFor: null
     focus: menuFor !== null
     Keys.onEscapePressed: menuFor = null
-    // Clic en cualquier otro lugar del panel cierra el menú.
+    // Clicking anywhere else in the panel closes the menu.
     MouseArea { anchors.fill: parent; enabled: root.menuFor !== null; onClicked: root.menuFor = null }
     function quit(i) {
         Quickshell.execDetached([Qt.resolvedUrl("../scripts/tray-open.py").toString().replace("file://", ""), "--quit", i.id])
@@ -29,14 +29,14 @@ Item {
         IslandBus.islandCommand("close")
     }
 
-    // Tocar SystemTray siempre registra el StatusNotifierWatcher, así las apps publican
-    // su icono aunque el panel esté cerrado. La lista solo se enlaza con el panel abierto.
+    // Touching SystemTray always registers the StatusNotifierWatcher, so apps publish
+    // their icon even when the panel is closed. The list is only bound when the panel is open.
     readonly property var trayItems: SystemTray.items.values
     readonly property var items: open ? trayItems.filter(i => !!i) : []
-    // Si la app del menú abierto desaparece (p. ej. tras "Salir"), olvidar el menú.
+    // If the open menu's app disappears (e.g. after "Quit"), forget the menu.
     onItemsChanged: if (menuFor && items.indexOf(menuFor) < 0) menuFor = null
 
-    // Ids SNI crudos ("Grok Bot_status_icon_1", "chrome_status_icon_1", "steam-2") → nombre limpio.
+    // Raw SNI IDs ("Grok Bot_status_icon_1", "chrome_status_icon_1", "steam-2") → clean name.
     function cleanId(s) {
         return (s || "").replace(/_status_icon_\d+$/i, "").replace(/[-_ ]\d+$/, "").replace(/[_-]+/g, " ").trim()
     }
@@ -56,8 +56,8 @@ Item {
     }
     function entryIcon(i) { const e = entryOf(i); return e ? Quickshell.iconPath(e.icon, true) : "" }
     function iconOf(i) { return i.icon ? i.icon : entryIcon(i) }
-    // Pedir Activate (algunas apps lo atienden) y dejar que el script complete:
-    // enfocar la ventana si apareció/existe, o relanzar la app si no hay ninguna.
+    // Request Activate (some apps handle it) and let the script complete:
+    // focus window if it appeared/exists, or relaunch app if none.
     function activate(i) {
         if (!i.onlyMenu) i.activate()
         const e = entryOf(i)
@@ -75,7 +75,7 @@ Item {
         x: Theme.padPanel - 4; y: Theme.padPanel - 4; width: parent.width - (Theme.padPanel - 4) * 2
         spacing: Theme.space2
 
-        Title { text: I18n.tr("En segundo plano") }
+        Title { text: I18n.tr("Background apps") }
         Rectangle {
             width: parent.width; radius: Theme.radiusPill - 2; color: Theme.surface
             height: (root.items.length === 0 ? empty.height : list.implicitHeight) + 8
@@ -86,7 +86,7 @@ Item {
                 visible: root.items.length === 0
                 y: 4; width: parent.width; height: 44
                 horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
-                text: I18n.tr("No hay apps en segundo plano"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontBody
+                text: I18n.tr("No background apps"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontBody
             }
             Column {
                 id: list
@@ -126,7 +126,7 @@ Item {
                             }
                         }
 
-                        // Menú de la app, desplegado bajo la fila.
+                        // App menu, displayed below row.
                         Rectangle {
                             id: menuBox
                             x: 12; y: 40; width: parent.width - 24; radius: Theme.radiusChip
@@ -148,7 +148,7 @@ Item {
                                         required property var modelData
                                         width: menuCol.width
                                         TrayMenuRow { id: topRow; entry: top.modelData; onToggle: expanded = !expanded; onActivated: root.trigger(top.modelData) }
-                                        // Submenú en línea (un nivel), con sangría.
+                                        // Inline submenu (one level), indented.
                                         Column {
                                             x: 12; width: parent.width - 12
                                             visible: topRow.expanded
@@ -160,7 +160,7 @@ Item {
                                         }
                                     }
                                 }
-                                // Sin menú propio: cerrar la app con amabilidad (SIGTERM).
+                                // Without own menu: gracefully close app (SIGTERM).
                                 Item {
                                     visible: !row.modelData.hasMenu
                                     width: parent.width; height: visible ? 32 : 0
@@ -170,7 +170,7 @@ Item {
                                     }
                                     Text {
                                         x: 16; anchors.verticalCenter: parent.verticalCenter
-                                        text: I18n.tr("Cerrar"); color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
+                                        text: I18n.tr("Close"); color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
                                     }
                                     MouseArea { id: qMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.quit(row.modelData) }
                                 }
