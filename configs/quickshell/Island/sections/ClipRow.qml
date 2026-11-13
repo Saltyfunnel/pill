@@ -1,8 +1,9 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import "../../Common"
 
-// Elemento del portapapeles: texto (2 líneas como máximo) o "Imagen".
-// Clic: copiar. Al pasar el mouse: fijar/soltar y quitar.
+// Clipboard item: text (max 2 lines) or "Image".
+// Click: copy. On hover: pin/unpin and remove.
 Rectangle {
     id: row
     property string text
@@ -13,10 +14,10 @@ Rectangle {
     signal pinToggled()
     signal removeRequested()
 
-    // "[[ binary data 182 KiB png 1920x1080 ]]" → "Imagen PNG · 1920 × 1080".
+    // "[[ binary data 182 KiB png 1920x1080 ]]" → "PNG Image · 1920 × 1080".
     function imageText() {
         const m = row.text.match(/binary data .*?(\w+)\s+(\d+)x(\d+)/)
-        return m ? I18n.tr("Imagen %1 · %2 × %3", m[1].toUpperCase(), m[2], m[3]) : I18n.tr("Imagen")
+        return m ? I18n.tr("%1 Image · %2 × %3", m[1].toUpperCase(), m[2], m[3]) : I18n.tr("Image")
     }
 
     implicitHeight: Math.max(44, label.implicitHeight + 22)
@@ -44,7 +45,7 @@ Rectangle {
         anchors.right: parent.right; anchors.rightMargin: 6
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
-        // Siempre visible si está fijado; si no, solo al pasar el mouse.
+        // Always visible if pinned; otherwise, only on hover.
         Rectangle {
             visible: !row.binary && (row.pinned || hov.hovered)
             width: 30; height: 30; radius: 15
