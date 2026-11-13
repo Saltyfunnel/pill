@@ -1,12 +1,13 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import "../../Common"
 import "../../Common/confirm.js" as Confirm
 import ".."
 
-// Energía y Ajustes. Cerrar sesión / Reiniciar / Apagar piden confirmación con UNA sola
-// máquina de estados (Common/confirm.js): solo una puede estar armada; el segundo clic
-// ejecuta una vez y los clics siguientes se ignoran durante 2 s.
+// Power and Settings. Logout / Reboot / Power off require confirmation with a SINGLE
+// state machine (Common/confirm.js): only one can be armed; the second click
+// executes once and subsequent clicks are ignored for 2s.
 Row {
     id: root
     signal done()
@@ -28,7 +29,7 @@ Row {
     function reset() { disarm.stop(); st = Confirm.disarm(st) }
     Timer { id: disarm; interval: 3000; onTriggered: root.st = Confirm.disarm(root.st) }
 
-    MenuButton { icon: "logout"; label: I18n.tr("Cerrar sesión"); armed: root.armed === "logout"; onActivated: root.press("logout") }
-    MenuButton { icon: "restart"; label: I18n.tr("Reiniciar"); armed: root.armed === "reboot"; onActivated: root.press("reboot") }
-    MenuButton { icon: "power"; label: I18n.tr("Apagar"); armed: root.armed === "poweroff"; onActivated: root.press("poweroff") }
+    MenuButton { icon: "logout"; label: I18n.tr("Log out"); armed: root.armed === "logout"; onActivated: root.press("logout") }
+    MenuButton { icon: "restart"; label: I18n.tr("Reboot"); armed: root.armed === "reboot"; onActivated: root.press("reboot") }
+    MenuButton { icon: "power"; label: I18n.tr("Shut down"); armed: root.armed === "poweroff"; onActivated: root.press("poweroff") }
 }
