@@ -1,8 +1,8 @@
 import QtQuick
 import "../Common"
 
-// Fila del menú de una app de la bandeja (texto, separador, deshabilitada, check).
-// Las de submenú emiten toggle() para expandirse en línea; el resto, activated().
+// Tray app menu row (text, separator, disabled, check).
+// Submenu items emit toggle() to expand inline; others emit activated().
 Item {
     id: mr
     required property var entry
@@ -25,7 +25,7 @@ Item {
     Text {
         visible: !mr.entry.isSeparator
         x: 16; width: parent.width - 48; anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-        text: (mr.entry.text || "").replace(/_(.)/g, "$1")   // mnemónicos: "_Salir" → "Salir", "__" → "_"
+        text: (mr.entry.text || "").replace(/_(.)/g, "$1")   // mnemonics: "_Exit" → "Exit", "__" → "_"
         color: mr.entry.enabled ? Theme.textPrimary : Theme.textSecondary
         opacity: mr.entry.enabled ? 1 : 0.6
         font.family: Theme.font; font.pixelSize: 13
