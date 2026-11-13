@@ -1,36 +1,47 @@
-pragma Singleton
 import QtQuick
-import Quickshell
-import Quickshell.Io
-import Quickshell.Services.Mpris
 
-// Estado de reproducción (MPRIS) y nivel de audio para el baile del personaje.
-// cava corre en modo crudo solo mientras hay música y un personaje visible bailando.
-Singleton {
-    id: root
-    readonly property bool playing: Mpris.players.values.some(p => p.isPlaying)
-    property int users: 0
-    property real level: 0          // 0..1, suavizado
-    property bool hasLevel: false
-    function acquire() { users++ }
-    function release() { users = Math.max(0, users - 1) }
-
-    readonly property string conf: Qt.resolvedUrl("../scripts/cava-raw.conf").toString().replace("file://", "")
-
-    Process {
-        id: cava
-        running: root.users > 0 && root.playing
-        command: ["cava", "-p", root.conf]
-        stdout: SplitParser {
-            onRead: line => {
-                const v = line.split(";").filter(x => x !== "").map(Number)
-                if (v.length === 0) return
-                // graves pesan más
-                const lv = (v[0] * 2 + v[1] * 2 + v.slice(2).reduce((a, b) => a + b, 0)) / ((v.length + 2) * 100)
-                root.level = root.level * 0.6 + lv * 0.4
-                root.hasLevel = true
-            }
+// iOS-style switch (black on, gray off).
+Item {
+    id: sw
+    property bool checked: false
+    property bool enabled: true
+    signal toggled(bool value)
+    width: 46; height: Theme.controlH - 4
+    activeFocusOnTab: enabled
+    opacity: enabled ? 1 : 0.45
+    Keys.onPressed: e => {
+        if (!enabled) return
+        if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter || e.key === Qt.Key_Space) {
+            sw.toggled(!sw.checked); e.accepted = true
         }
-        onRunningChanged: if (!running) { root.hasLevel = false; root.level = 0 }
+    }
+    Rectangle {
+        anchors.fill: parent
+        radius: height / 2
+        color: sw.checked ? Theme.fill : Theme.track
+        Behavior on color { ColorAnimation { duration: Theme.durFast } }
+        // Keyboard focus ring
+        Rectangle {
+            anchors.fill: parent; anchors.margins: -3; radius: height / 2
+            color: "transparent"; border.width: 2; border.color: Theme.fill
+            opacity: sw.activeFocus ? 1 : 0
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
+        }
+        Rectangle {
+            width: 22; height: 22; radius: 11
+            y: (parent.height - height) / 2
+            x: sw.checked ? parent.width - width - 3 : 3
+            color: sw.checked ? Theme.onAccent : Theme.knob
+            Behavior on x { NumberAnimation { duration: Theme.durFast; easing.type: Easing.OutCubic } }
+        }
+    }
+    // Enlarged clickable area (≥ hitMin in touch height)
+    MouseArea {
+        anchors.fill: parent
+        anchors.margins: -((Theme.hitMin - parent.height) / 2)
+        enabled: sw.enabled
+        cursorShape: Qt.PointingHandCursor
+        onClicked: sw.toggled(!sw.checked)
     }
 }
