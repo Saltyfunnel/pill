@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# Estado del sistema para el panel de la isla. Imprime un JSON y termina.
-#   sysstatus.py res   → recursos (CPU %, RAM, disco, temperatura)  [cada 2 s con el panel abierto]
-#   sysstatus.py full  → recursos + red + dispositivos + GPU         [al abrir y cada ~8 s]
+# System status for the island panel. Prints a JSON and exits.
+#   sysstatus.py res   → resources (CPU %, RAM, disk, temperature)  [every 2 s with panel open]
+#   sysstatus.py full  → resources + network + devices + GPU        [on open and every ~8 s]
 import json, os, shutil, subprocess, sys, time
 
 def run(cmd, t=1.5):
@@ -85,8 +85,8 @@ def devices():
     except ValueError:
         d = {}
     def clean(lst, drop):
-        # Un mismo aparato expone varias interfaces ("… keyboard 1", "… keyboard mouse"):
-        # se quitan sufijos numéricos y las interfaces del otro tipo.
+        # A single device exposes multiple interfaces ("… keyboard 1", "… keyboard mouse"):
+        # numeric suffixes and interfaces of the other type are removed.
         seen = []
         for x in lst:
             n = x.get("name", "").lower()
@@ -124,14 +124,14 @@ def gpu():
     return {"name": p[0].replace("NVIDIA ", "").replace("GeForce ", ""), "util": num(p[1]), "temp": num(p[2])}
 
 def battery():
-    # Simulador (scripts/fake-laptop.sh): si existe el archivo falso, manda ese.
+    # Simulator (scripts/fake-laptop.sh): if the fake file exists, it sends that one.
     fk = os.path.expanduser("~/.cache/island-shell/fake-battery.json")
     if os.path.exists(fk):
         try:
             with open(fk) as fh: j = json.load(fh)
             return {"pct": num(j.get("pct", 100)), "status": j.get("status", "Discharging"), "mins": j.get("mins")}
         except (OSError, ValueError): return None
-    # Primera batería real (no la de un mouse/teclado: scope "Device"). None si no hay.
+    # First real battery (not a mouse/keyboard: scope "Device"). None if there is none.
     base = "/sys/class/power_supply"
     for d in (sorted(os.listdir(base)) if os.path.isdir(base) else []):
         p = f"{base}/{d}"
@@ -151,14 +151,16 @@ def battery():
     return None
 
 def safe(fn, fallback):
-    # Un sensor raro (p. ej. nvidia-smi "[N/A]") no debe dejar al panel sin datos.
+    # A rare sensor (e.g., nvidia-smi "[N/A]") must not leave the panel without data.
     try:
         return fn()
     except Exception:
         return fallback
+
 def num(x):
     try: return int(float(x))
     except (TypeError, ValueError): return 0
+
 mode = sys.argv[1] if len(sys.argv) > 1 else "full"
 res = {"res": safe(resources, None)}
 if res["res"] is not None: res["res"]["battery"] = safe(battery, None)
