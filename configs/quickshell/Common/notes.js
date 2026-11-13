@@ -1,6 +1,6 @@
 .pragma library
-// Notas de la isla: funciones puras sobre la lista [{ id, text, updated }]
-// (más reciente primero). Pruebas en tests/notes.test.js.
+// Island notes: pure functions over the list [{ id, text, updated }]
+// (newest first). Tests in tests/notes.test.js.
 
 function parse(text) {
     try {
@@ -17,18 +17,18 @@ function newId(now, notes) {
     return id
 }
 function add(notes, now) { const n = { id: newId(now, notes), text: "", updated: now }; return { notes: [n].concat(notes), id: n.id } }
-// Editar sube la nota arriba; sin cambios, la lista queda igual.
+// Editing moves the note to the top; if unchanged, the list remains the same.
 function update(notes, id, text, now) {
     const n = notes.find(x => x.id === id)
     if (!n || n.text === text) return notes
     return [{ id: id, text: text, updated: now }].concat(notes.filter(x => x.id !== id))
 }
 function remove(notes, id) { return notes.filter(x => x.id !== id) }
-// Título = primera línea no vacía (la vista pone "Nota nueva" si está vacía).
+// Title = first non-empty line (the view shows "New note" if empty).
 function title(text) { const l = text.split("\n").find(s => s.trim() !== ""); return l ? l.trim() : "" }
 function preview(text) {
     const lines = text.split("\n").filter(s => s.trim() !== "")
     return lines.slice(1).join(" ").trim()
 }
-// Al guardar se descartan las notas vacías.
+// Empty notes are discarded when saving.
 function prune(notes) { return notes.filter(n => n.text.trim() !== "") }
