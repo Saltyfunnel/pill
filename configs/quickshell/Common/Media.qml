@@ -1,3 +1,4 @@
+pragma Singleton
 import QtQuick
 
 // iOS-style switch (black on, gray off).
