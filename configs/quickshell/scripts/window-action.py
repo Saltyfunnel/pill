@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Acciones sobre UNA ventana desde la vista de escritorios de la isla.
+"""Actions on A window from the island's workspaces view.
 
-  window-action.py move <dirección> <escritorio>   mueve sin seguirla (movetoworkspacesilent)
-  window-action.py close <dirección>               pide cerrarla (closewindow: cierre amable)
+  window-action.py move <address> <workspace>   moves without following it (movetoworkspacesilent)
+  window-action.py close <address>              requests closing it (closewindow: graceful close)
 
-Antes de actuar se vuelve a pedir la lista de ventanas a Hyprland (`hyprctl clients -j`):
-si la ventana ya no existe no se hace nada. Nunca se mata un proceso (no hay "kill").
-Sintaxis de dispatch Lua de Hyprland 0.56 (hl.dsp.window.move / hl.dsp.window.close).
-Imprime un JSON: {"ok": bool, "reason": "...", "noop": bool}.
+Before acting, the list of windows is requested again from Hyprland (`hyprctl clients -j`):
+if the window no longer exists, nothing is done. A process is never killed (no "kill").
+Hyprland 0.56 Lua dispatch syntax (hl.dsp.window.move / hl.dsp.window.close).
+Prints a JSON: {"ok": bool, "reason": "...", "noop": bool}.
 """
 import json, re, subprocess, sys
 
@@ -27,7 +27,7 @@ def main(argv):
     action, addr = argv[0], argv[1].lower()
     if not addr.startswith("0x"):
         addr = "0x" + addr
-    # Validación estricta: lo que va dentro del texto Lua no puede inyectar nada.
+    # Strict validation: what goes inside the Lua text cannot inject anything.
     if not re.fullmatch(r"0x[0-9a-f]{1,16}", addr):
         return out(False, "bad-address")
     ws = argv[2] if action == "move" else ""
