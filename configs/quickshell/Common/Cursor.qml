@@ -3,9 +3,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Posición global del cursor (Hyprland). Un único proceso liviano consulta
-// `hyprctl cursorpos` ~25 veces/seg, y solo corre mientras algún consumidor
-// (personaje visible) lo necesita. Sin consumidores no hay sondeo.
+// Global cursor position (Hyprland). A single lightweight process queries
+// `hyprctl cursorpos` ~25 times/sec, and only runs while some consumer
+// (visible item) needs it. Without consumers, there is no polling.
 Singleton {
     id: root
     property int users: 0
@@ -20,10 +20,10 @@ Singleton {
     Process {
         id: proc
         running: root.users > 0
-        // Si el proceso cae (p. ej. Hyprland recargó), se relanza en 2 s mientras haya usuarios.
+        // If the process crashes (e.g. Hyprland reloaded), it relaunches in 2s while there are users.
         onExited: if (root.users > 0) relaunch.restart()
-        // Un solo proceso que lee el socket IPC de Hyprland con frecuencia adaptativa
-        // (antes: un hyprctl cada 40 ms ≈ 40 % de un núcleo).
+        // A single process that reads Hyprland's IPC socket with adaptive frequency
+        // (previously: one hyprctl every 40 ms ≈ 40% of a core).
         command: [Qt.resolvedUrl("../scripts/cursorpos.py").toString().replace("file://", "")]
         stdout: SplitParser {
             onRead: line => {
