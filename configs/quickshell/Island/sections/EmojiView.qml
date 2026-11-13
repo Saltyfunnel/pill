@@ -5,10 +5,10 @@ import Quickshell.Io
 import "../../Common"
 import "../../Common/emoji.js" as E
 
-// Selector de emojis dentro de la isla (acceso fijable "Emojis"). Categorías + búsqueda
-// (español e inglés, sin tildes). Clic: copia la secuencia exacta con wl-copy y muestra
-// "Copiado"; no escribe nada solo. Abrir la vista no toca el portapapeles.
-// Los datos (assets/emoji/emoji.json) se leen la primera vez que se abre.
+// Emoji selector inside the island ("Emojis" pinnable access). Categories + search
+// (Spanish and English, unaccented). Click: copies exact sequence with wl-copy and shows
+// "Copied"; writes nothing by itself. Opening the view does not touch the clipboard.
+// Data (assets/emoji/emoji.json) is read on first open.
 Item {
     id: root
     signal back()
@@ -47,7 +47,7 @@ Item {
         width: parent.width
         spacing: 12
 
-        // Cabecera: volver · título · tono de piel (clic: siguiente tono).
+        // Header: back · title · skin tone (click: next tone).
         Item {
             width: parent.width; height: 32
             Rectangle {
@@ -70,11 +70,11 @@ Item {
                     id: tm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                     onClicked: DisplayState.setEmojiTone((root.tone + 1) % E.TONES.length)
                 }
-                Accessible.name: I18n.tr("Tono de piel")
+                Accessible.name: I18n.tr("Skin tone")
             }
         }
 
-        // Búsqueda (sin bordes: píldora gris).
+        // Search (borderless: gray pill).
         Rectangle {
             width: parent.width; height: 38; radius: 19
             color: Theme.field
@@ -95,14 +95,14 @@ Item {
                 Keys.onEscapePressed: e => { if (field.text) field.text = ""; else e.accepted = false }
                 Text {
                     visible: !field.text
-                    text: I18n.tr("Buscar emoji")
+                    text: I18n.tr("Search emoji")
                     color: Theme.textSecondary
                     font: field.font
                 }
             }
         }
 
-        // Categorías (solo sin búsqueda).
+        // Categories (search-free only).
         Row {
             visible: !root.searching
             anchors.horizontalCenter: parent.horizontalCenter
@@ -124,7 +124,7 @@ Item {
 
         Text {
             width: parent.width; leftPadding: 4
-            text: root.searching ? (root.shown.length ? I18n.tr("Resultados") : I18n.tr("Sin resultados")) : (root.current ? root.current.label : (root.raw ? "" : I18n.tr("Cargando…")))
+            text: root.searching ? (root.shown.length ? I18n.tr("Results") : I18n.tr("No results")) : (root.current ? root.current.label : (root.raw ? "" : I18n.tr("Loading…")))
             color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold
         }
 
@@ -156,12 +156,12 @@ Item {
             }
         }
 
-        // Aviso discreto tras copiar (el emoji va en su propio texto, con la fuente de emojis).
+        // Discreet notice after copying (emoji goes in its own text, with emoji font).
         Item {
             width: parent.width; height: 20
             Row {
                 anchors.centerIn: parent; spacing: 6
-                Text { anchors.verticalCenter: parent.verticalCenter; text: root.copied ? I18n.tr("Copiado") : I18n.tr("Clic para copiar · Ctrl+V para pegar"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: root.copied ? I18n.tr("Copied") : I18n.tr("Click to copy · Ctrl+V to paste"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption }
                 Text { anchors.verticalCenter: parent.verticalCenter; visible: root.copied !== ""; text: E.glyph(root.copied); font.family: Theme.emojiFont; font.pixelSize: Theme.fontBody }
             }
         }
