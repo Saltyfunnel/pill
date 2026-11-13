@@ -1,0 +1,164 @@
+import QtQuick
+import Quickshell
+import "../Common"
+import "sections"
+
+// Menú de la isla expandida: compone las secciones con entrada escalonada.
+Item {
+    id: root
+    signal done()
+    property bool open: false
+    readonly property bool searchFocused: search.hasFocus
+    property string page: "menu"   // "menu" | "desks" | "clip" | "cal" | "notes" | "emoji"
+    implicitHeight: (page === "desks" ? desks.implicitHeight : page === "clip" ? clip.implicitHeight : page === "cal" ? cal.implicitHeight : page === "notes" ? notes.implicitHeight : page === "emoji" ? emoji.implicitHeight : col.implicitHeight) + Theme.padPanel * 2
+
+    function showClipboard() { clip.refresh(); page = "clip" }
+
+    // El buscador no se enfoca solo: se activa al hacerle clic.
+    function opened() { search.reset() }
+
+    // Entrada escalonada: stage sube de a uno cada 45 ms al abrir.
+    property int stage: 0
+    Timer {
+        id: stagger; interval: Theme.durStagger || 1; repeat: true
+        running: root.open && root.stage < 6 && Theme.durStagger > 0
+        onTriggered: root.stage++
+    }
+    // Con reduceMotion, mostrar todo de golpe (sin escalonado).
+    onOpenChanged: {
+        if (open && Theme.durStagger === 0) stage = 6
+        if (!open) { stage = 0; page = "menu"; actions.reset(); notes.reset(); emoji.reset() }
+    }
+
+    SystemClock { id: clock; precision: SystemClock.Minutes }
+
+    component Reveal: Item {
+        property int step: 0
+        opacity: root.stage > step ? 1 : 0
+        transform: Translate { y: root.stage > step ? 0 : (Theme.durStagger === 0 ? 0 : 4); Behavior on y { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 100 } }
+    }
+
+    Column {
+        id: col
+        x: root.page === "menu" ? Theme.padPanel : -root.width * 0.3
+        y: Theme.padPanel
+        opacity: root.page === "menu" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "menu"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        width: parent.width - Theme.padPanel * 2
+        spacing: Theme.space6 - 2
+
+        Reveal {
+            step: 0; width: parent.width; height: 48
+            Row {
+                spacing: Theme.space4
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 0
+                    Text {
+                        text: Qt.formatDateTime(clock.date, "HH:mm")
+                        color: Theme.textPrimary; font.family: Theme.font
+                        font.pixelSize: Theme.fontTitle; font.weight: Font.Medium
+                        font.features: { "tnum": 1 }
+                    }
+                    // Clic en la fecha → calendario.
+                    Text {
+                        text: I18n.longDate(clock.date)
+                        color: dateMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
+                        MouseArea { id: dateMouse; anchors.fill: parent; anchors.margins: -4; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            onClicked: { cal.reset(); root.page = "cal" } }
+                    }
+                }
+            }
+        }
+        Reveal { step: 1; width: parent.width; height: search.implicitHeight
+            SearchSection { id: search; width: parent.width; onLaunched: root.done() } }
+        Reveal { step: 2; width: parent.width; height: media.implicitHeight; visible: media.player !== null
+            MediaSection { id: media; width: parent.width } }
+        // La visibilidad se decide con los datos, NO con `pinned.visible`: el `visible` de un hijo
+        // es false mientras el menú está oculto, y atarlo al padre lo dejaba en false para siempre.
+        Reveal { step: 3; width: parent.width; height: pinned.implicitHeight
+            visible: QuickItems.pinnedSliders.length + QuickItems.pinnedButtons.length > 0
+            PinnedSection { id: pinned; width: parent.width
+                onDone: root.done(); onDesktops: { desks.refresh(); root.page = "desks" }
+                onClipboard: root.showClipboard()
+                onNotes: root.page = "notes"
+                onEmoji: { emoji.reset(); root.page = "emoji" } } }
+        Reveal { step: 4; width: parent.width; height: actions.implicitHeight
+            ActionsSection { id: actions; anchors.horizontalCenter: parent.horizontalCenter; onDone: root.done()
+                } }
+    }
+
+    WorkspacesView {
+        id: desks
+        x: root.page === "desks" ? 20 : root.width * 0.3
+        y: Theme.padPanel
+        width: root.width - 40
+        opacity: root.page === "desks" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "desks"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        onBack: root.page = "menu"
+        onPicked: root.done()
+    }
+
+    ClipboardView {
+        id: clip
+        x: root.page === "clip" ? 20 : root.width * 0.3
+        y: Theme.padPanel
+        width: root.width - 40
+        opacity: root.page === "clip" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "clip"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        onBack: root.page = "menu"
+        onPicked: root.done()
+    }
+
+    CalendarView {
+        id: cal
+        x: root.page === "cal" ? 20 : root.width * 0.3
+        y: Theme.padPanel
+        width: root.width - 40
+        today: clock.date
+        locale: I18n.locale
+        opacity: root.page === "cal" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "cal"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        onBack: root.page = "menu"
+    }
+
+    NotesView {
+        id: notes
+        x: root.page === "notes" ? 20 : root.width * 0.3
+        y: Theme.padPanel
+        width: root.width - 40
+        opacity: root.page === "notes" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "notes"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        onBack: root.page = "menu"
+    }
+
+    EmojiView {
+        id: emoji
+        x: root.page === "emoji" ? 20 : root.width * 0.3
+        y: Theme.padPanel
+        width: root.width - 40
+        active: root.open && root.page === "emoji"
+        opacity: root.page === "emoji" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "emoji"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        onBack: root.page = "menu"
+    }
+}
