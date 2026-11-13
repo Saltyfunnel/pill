@@ -1,6 +1,6 @@
 import QtQuick
 
-// Slider estilo Centro de Control: pista gruesa gris, relleno negro, icono adentro.
+// Control Center style slider: thick gray track, black fill, icon inside.
 Item {
     id: s
     property string icon
@@ -43,7 +43,7 @@ Item {
         }
         onPressed: m => upd(m.x)
         onPositionChanged: m => { if (pressed) upd(m.x) }
-        // Rueda: 5% por muesca. Los deltas chicos del touchpad se acumulan (no saltan de a 5%).
+        // Wheel: 5% per notch. Small touchpad deltas accumulate (don't jump by 5%).
         property real acc: 0
         onWheel: w => {
             acc += w.angleDelta.y
@@ -58,7 +58,7 @@ Item {
         size: 18
         name: s.icon
         tone: fillRect.width > 36 ? "white" : "dark"
-        // Icono clicable (silenciar): se atenúa al pasar y se hunde al presionar.
+        // Clickable icon (mute): fades on hover and sinks on press.
         opacity: iconMouse.pressed ? 0.55 : iconMouse.containsMouse ? 0.75 : 1
         scale: iconMouse.pressed ? 0.9 : 1
         Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
@@ -77,8 +77,8 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         id: valueLabel
         text: s.valueText
-        // El color sigue al relleno: blanco solo cuando el negro ya pasa por debajo del número
-        // (antes quedaba gris sobre negro entre ~80% y 90%).
+        // The color follows the fill: white only when the fill has passed underneath the number
+        // (previously it stayed gray on black between ~80% and 90%).
         color: fillRect.width > x + width / 2 ? Theme.onAccent : Theme.textSecondary
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
         font.family: Theme.font; font.pixelSize: 12; font.weight: Font.Medium
