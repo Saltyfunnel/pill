@@ -4,13 +4,13 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import "../../Common"
 
-// Vista de escritorios dentro de la isla: grilla de workspaces con los iconos
-// de sus ventanas, el activo con contorno negro, y un "+" para uno nuevo.
-// Ventanas (cada icono es UNA ventana, también en apps con varias o agrupadas):
-//   clic → enfocarla · mantener o arrastrar → llevarla a otro escritorio (o al "+")
-//   × al pasar el mouse → cerrarla (cierre amable de Hyprland, nunca kill)
-//   Esc o soltar fuera de un escritorio → cancelar. Antes de actuar, window-action.py
-//   vuelve a consultar a Hyprland: si la ventana ya no existe, no hace nada.
+// Workspace view inside the island: grid of workspaces with window icons,
+// active one outlined, and a "+" for a new one.
+// Windows (each icon is ONE window, also in multi-window or grouped apps):
+//   click → focus it · hold or drag → move to another workspace (or the "+")
+//   × on hover → close it (graceful Hyprland close, never kill)
+//   Esc or drop outside a workspace → cancel. Before acting, window-action.py
+//   re-queries Hyprland: if the window no longer exists, it does nothing.
 Item {
     id: root
     signal back()
@@ -19,13 +19,13 @@ Item {
 
     function refresh() { cancelDrag(); notice = ""; Hyprland.refreshToplevels(); Hyprland.refreshWorkspaces() }
 
-    // --- Arrastre de una ventana ---
-    property string dragAddr: ""          // dirección de la ventana arrastrada ("" = ninguna)
+    // --- Window Dragging ---
+    property string dragAddr: ""             // address of dragged window ("" = none)
     property string dragIcon: ""
-    property int dragFrom: -1             // escritorio de origen
-    property real ghostX: 0               // centro del icono flotante (coordenadas de la grilla)
+    property int dragFrom: -1                // source workspace
+    property real ghostX: 0                  // floating icon center (grid coordinates)
     property real ghostY: 0
-    property var target: null             // id de escritorio, "new" (el +) o null
+    property var target: null                // workspace id, "new" (the +), or null
     property string notice: ""
     readonly property bool windowDrag: dragAddr !== ""
     readonly property string actionScript: Qt.resolvedUrl("../../scripts/window-action.py").toString().replace("file://", "")
@@ -33,14 +33,14 @@ Item {
     function startDrag(addr, icon, fromWs, gx, gy) {
         dragAddr = addr; dragIcon = icon; dragFrom = fromWs; notice = ""
         moveDrag(gx, gy)
-        keyCatcher.forceActiveFocus()              // Esc cancela el arrastre (no cierra la isla)
+        keyCatcher.forceActiveFocus()              // Esc cancels drag (does not close island)
     }
     function moveDrag(gx, gy) { ghostX = gx; ghostY = gy; target = grid.targetAt(gx, gy) }
     function cancelDrag() { dragAddr = ""; target = null; dragFrom = -1 }
     function dropDrag() {
         const addr = dragAddr, t = target, from = dragFrom
         cancelDrag()
-        if (!addr || t === null || t === from) return            // fuera o mismo escritorio: cancelar
+        if (!addr || t === null || t === from) return            // outside or same workspace: cancel
         act(["move", addr, t === "new" ? "emptynm" : String(t)])
     }
     function closeWindow(addr) { if (addr) act(["close", addr]) }
@@ -51,7 +51,7 @@ Item {
         root.picked()
     }
     function act(args) {
-        if (actProc.running) return                               // una acción a la vez
+        if (actProc.running) return                            // one action at a time
         actProc.command = ["python3", root.actionScript].concat(args)
         actProc.running = true
     }
@@ -61,14 +61,14 @@ Item {
             onStreamFinished: {
                 let r = null
                 try { r = JSON.parse(text) } catch (e) { r = null }
-                if (r && !r.ok && r.reason === "gone") root.notice = I18n.tr("Esa ventana ya no existe.")
-                else if (!r || !r.ok) root.notice = I18n.tr("No se pudo completar la acción.")
+                if (r && !r.ok && r.reason === "gone") root.notice = I18n.tr("That window no longer exists.")
+                else if (!r || !r.ok) root.notice = I18n.tr("Could not complete action.")
                 Hyprland.refreshToplevels(); Hyprland.refreshWorkspaces()
             }
         }
     }
     Timer { running: root.notice !== ""; interval: 2600; onTriggered: root.notice = "" }
-    // Si la ventana arrastrada desaparece (se cerró sola), el arrastre se cancela.
+    // If the dragged window disappears (closed itself), drag cancels.
     Connections {
         target: Hyprland.toplevels
         function onValuesChanged() {
@@ -77,10 +77,10 @@ Item {
     }
     Item { id: keyCatcher; Keys.onEscapePressed: e => { if (root.windowDrag) { root.cancelDrag(); e.accepted = true } else e.accepted = false } }
 
-    // Orden visual (IDs). Sigue a Hyprland salvo mientras se arrastra.
+    // Visual order (IDs). Follows Hyprland except while dragging.
     property var order: []
     property bool dragged: false
-    property bool snap: false        // reacomodo instantáneo tras reordenar (sin animar de vuelta)
+    property bool snap: false         // instant rearrangement after reordering (no return animation)
     Connections {
         target: Workspaces
         function onReordered() { root.snap = true; root.order = root.ids; Qt.callLater(() => root.snap = false) }
@@ -97,7 +97,7 @@ Item {
     }
     function commit() {
         const o = order
-        // Sin cambios: nada que hacer. Con cambios: mover ventanas en Hyprland.
+        // No changes: nothing to do. With changes: move windows in Hyprland.
         if (o.length === ids.length && !o.every((id, i) => id === ids[i])) Workspaces.reorder(o)
         else order = ids
     }
@@ -127,14 +127,14 @@ Item {
             }
             Text {
                 anchors.centerIn: parent
-                text: I18n.tr("Escritorios")
+                text: I18n.tr("Workspaces")
                 color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontClock; font.weight: Font.DemiBold
             }
         }
 
-        // Teselas en posiciones calculadas (no Grid) para poder arrastrarlas: mantener y
-        // arrastrar un escritorio lo reordena; los demás se corren con easing en vivo.
-        // Al soltar en otra posición, el contenido se mueve de verdad en Hyprland.
+        // Tiles in calculated positions (not Grid) to allow dragging: holding and
+        // dragging a workspace reorders it; others shift with live easing.
+        // On drop in another position, content actually moves in Hyprland.
         Item {
             id: grid
             readonly property int columns: 3
@@ -146,16 +146,16 @@ Item {
             function slotX(i) { return (i % columns) * (tileW + gap) }
             function slotY(i) { return Math.floor(i / columns) * (tileH + gap) }
             function slotAt(px, py) {
-                // px, py: centro de la tesela arrastrada
+                // px, py: center of dragged tile
                 const c = Math.max(0, Math.min(columns - 1, Math.floor(px / (tileW + gap))))
                 const r = Math.max(0, Math.floor(py / (tileH + gap)))
                 return Math.min(root.order.length - 1, r * columns + c)
             }
-            // Destino de una ventana soltada en (px, py): un escritorio, "new" (el +) o null.
+            // Destination of a window dropped at (px, py): a workspace, "new" (the +), or null.
             function targetAt(px, py) {
                 if (px < 0 || py < 0 || px > width || py > height) return null
                 const c = Math.floor(px / (tileW + gap)), r = Math.floor(py / (tileH + gap))
-                if (c >= columns || px - c * (tileW + gap) > tileW || py - r * (tileH + gap) > tileH) return null   // en un hueco
+                if (c >= columns || px - c * (tileW + gap) > tileW || py - r * (tileH + gap) > tileH) return null   // in a gap
                 const i = r * columns + c
                 if (i < root.order.length) return root.order[i]
                 return i === root.order.length ? "new" : null
@@ -198,14 +198,14 @@ Item {
                         onPositionChanged: if (drag.active) root.moveTo(tile.modelData.id, grid.slotAt(tile.x + tile.width / 2, tile.y + tile.height / 2))
                         onReleased: {
                             if (tile.dragging || root.dragged) {
-                                Qt.callLater(() => root.dragged = false)   // que el clic no cuente
+                                Qt.callLater(() => root.dragged = false)   // prevent click from counting
                                 tile.x = Qt.binding(() => grid.slotX(tile.slot)); tile.y = Qt.binding(() => grid.slotY(tile.slot))
                                 root.commit()
                             }
                         }
                         onClicked: if (!root.dragged) { Workspaces.goTo(tile.modelData.id); root.picked() }
                     }
-                    // Una ventana por icono (hasta 4; con más, 3 y "+N").
+                    // One window per icon (up to 4; with more, 3 and "+N").
                     Row {
                         anchors.centerIn: parent; anchors.verticalCenterOffset: 6
                         spacing: 6
@@ -235,7 +235,7 @@ Item {
                                     preventStealing: true
                                     cursorShape: root.windowDrag ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                                     property real px: 0; property real py: 0
-                                    property bool wasDrag: false      // este toque ya fue un arrastre: el clic no enfoca
+                                    property bool wasDrag: false      // this touch was a drag: click doesn't focus
                                     function gpos(m) { return mapToItem(grid, m.x, m.y) }
                                     onPressed: m => { px = m.x; py = m.y; wasDrag = false; hold.restart() }
                                     onPositionChanged: m => {
@@ -251,16 +251,16 @@ Item {
                                         onTriggered: if (wm.pressed && !root.windowDrag) { const g = wm.mapToItem(grid, wm.px, wm.py); root.startDrag(winItem.addr, winItem.icon, tile.modelData.id, g.x, g.y) }
                                     }
                                 }
-                                // Cerrar: × al pasar el mouse (no durante un arrastre).
+                                // Close: × on hover (not during drag).
                                 Rectangle {
                                     visible: (wm.containsMouse || xm.containsMouse) && !root.windowDrag
-                                    // En la esquina, casi fuera del icono: no tapa el punto donde se agarra la ventana.
+                                    // In the corner, almost outside the icon: doesn't block grab point.
                                     x: parent.width - 6; y: -10
                                     width: 16; height: 16; radius: 8
                                     color: xm.containsMouse ? Theme.fillHover : Theme.fill
                                     Icon { anchors.centerIn: parent; name: "dismiss"; size: 10; tone: "white" }
                                     MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeWindow(winItem.addr) }
-                                    Accessible.name: I18n.tr("Cerrar ventana")
+                                    Accessible.name: I18n.tr("Close window")
                                     Accessible.role: Accessible.Button
                                 }
                             }
@@ -289,7 +289,7 @@ Item {
                     onClicked: { Workspaces.goEmpty(); root.picked() }
                 }
             }
-            // Ventana arrastrada: su icono sigue al puntero.
+            // Dragged window: its icon follows the pointer.
             Image {
                 visible: root.windowDrag
                 z: 20
@@ -303,8 +303,8 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
             text: root.notice !== "" ? root.notice
-                : root.windowDrag ? I18n.tr("Soltala en otro escritorio para moverla · Esc cancela")
-                : I18n.tr("Arrastrá un escritorio para reordenarlo, o una app para llevarla a otro")
+                : root.windowDrag ? I18n.tr("Drop it on another workspace to move it · Esc cancels")
+                : I18n.tr("Drag a workspace to reorder it, or an app to move it to another")
             color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontTiny
         }
     }
