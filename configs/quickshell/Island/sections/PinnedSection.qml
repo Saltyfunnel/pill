@@ -4,8 +4,8 @@ import Quickshell
 import "../../Common"
 import ".."
 
-// Elementos fijados del menú (Ajustes › Personalización › Menú de la isla):
-// controles deslizantes arriba y botones en filas de 4 (como máximo 3 filas).
+// Pinned menu items (Settings › Personalization › Island menu):
+// sliders on top and buttons in rows of 4 (maximum 3 rows).
 Column {
     id: root
     signal done()
@@ -22,17 +22,17 @@ Column {
 
     function activate(id) {
         if (id === "terminal") { QuickItems.run("kitty"); root.done() }
-        // Grabar: cierra la isla y arranca a los 0,4 s (para no grabarla abierta).
+        // Record: closes island and starts after 0.4s (so it's not recorded open).
         else if (id === "record") { if (Recorder.recording) Recorder.stop(); else Recorder.start(400); root.done() }
         else if (id === "capture") { Quickshell.execDetached(["sh", "-c", 'sleep 0.3; exec "$0" area', root.shotScript]); root.done() }
-        // Apagar monitor: la isla se cierra y el
-        // script apaga por DPMS tras 1 s. Nada se cierra ni se mueve.
+        // Turn off monitor: island closes and
+        // script turns off via DPMS after 1s. Nothing closes or moves.
         else if (id === "screenoff") { Quickshell.execDetached([root.screenOffScript]); root.done() }
         else if (id === "desktops") root.desktops()
         else if (id === "clipboard") root.clipboard()
         else if (id === "notes") root.notes()
         else if (id === "emoji") root.emoji()
-        // Navegador / archivos: la isla se cierra solo si se lanzó; si no, aviso en línea.
+        // Browser / files: island closes only if launched; otherwise, inline notice.
         else if (id === "browser" || id === "files") Launch.open(id)
         else { const c = QuickItems.custom(id); if (c) { QuickItems.run(c.cmd); root.done() } }
     }
@@ -54,7 +54,7 @@ Column {
                 readonly property bool rec: modelData === "record" && Recorder.recording
                 icon: rec ? "stop" : (item && item.icon ? item.icon : "")
                 letter: item && !item.icon ? item.label.charAt(0).toUpperCase() : ""
-                label: rec ? I18n.tr("Detener") : modelData === "record" ? I18n.tr("Grabar") : modelData === "screenoff" ? I18n.tr("Monitor off") : (item ? item.label : "")
+                label: rec ? I18n.tr("Stop") : modelData === "record" ? I18n.tr("Record") : modelData === "screenoff" ? I18n.tr("Monitor off") : (item ? item.label : "")
                 active: rec
                 onActivated: root.activate(b.modelData)
             }
@@ -65,7 +65,7 @@ Column {
         target: Launch
         function onLaunched() { root.done() }
     }
-    // Error al abrir (no bloquea; desaparece solo).
+    // Error on opening (non-blocking; disappears on its own).
     Text {
         width: parent.width
         visible: Launch.error !== ""
