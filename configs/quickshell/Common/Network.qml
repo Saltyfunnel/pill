@@ -3,9 +3,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Estado de red vía NetworkManager (nmcli). Solo consulta mientras alguien lo usa
-// (acquire/release, p. ej. el menú de la isla abierto): cada 5 s, sin procesos fijos.
-// La sección Wi-Fi se muestra solo si hay placa Wi-Fi y NO hay Ethernet conectada.
+// Network status via NetworkManager (nmcli). Only queries while someone is using it
+// (acquire/release, e.g. island menu open): every 5s, no permanent processes.
+// The Wi-Fi section is shown only if there is a Wi-Fi card and NO Ethernet connected.
 Singleton {
     id: root
     property int users: 0
@@ -13,19 +13,19 @@ Singleton {
     function release() { users = Math.max(0, users - 1) }
 
     property bool hasNmcli: true
-    property bool hasWifi: false          // existe un dispositivo Wi-Fi
-    property bool wired: false            // hay una conexión Ethernet activa
+    property bool hasWifi: false            // a Wi-Fi device exists
+    property bool wired: false              // an active Ethernet connection exists
     property bool wifiEnabled: false
-    property string ssid: ""              // red actual ("" = sin conexión)
-    property int signal: 0                // 0..100
-    property var networks: []             // [{ ssid, signal, secure, active, known }]
-    property var known: []                // nombres de conexiones Wi-Fi guardadas
+    property string ssid: ""                // current network ("" = disconnected)
+    property int signal: 0                  // 0..100
+    property var networks: []               // [{ ssid, signal, secure, active, known }]
+    property var known: []                  // names of saved Wi-Fi connections
     readonly property bool showWifi: hasNmcli && hasWifi && !wired
 
-    property string connecting: ""        // SSID en curso
-    property string error: ""             // último error (texto corto)
+    property string connecting: ""          // SSID in progress
+    property string error: ""               // last error (short text)
 
-    // nmcli -t separa con ":" y escapa ":" dentro de los valores como "\:".
+    // nmcli -t separates with ":" and escapes ":" inside values as "\:".
     function fields(line) {
         const out = []; let cur = ""
         for (let i = 0; i < line.length; i++) {
@@ -42,7 +42,7 @@ Singleton {
 
     Timer { running: root.users > 0; interval: 8000; repeat: true; onTriggered: root.refresh() }
 
-    // 1) Dispositivos: ¿Wi-Fi? ¿Ethernet conectada? + radio.
+    // 1) Devices: Wi-Fi? Connected Ethernet? + radio.
     Process {
         id: devs
         command: ["sh", "-c", "nmcli -t -f TYPE,STATE dev && echo RADIO:$(nmcli radio wifi) && nmcli -t -f NAME,TYPE con show | grep ':802-11-wireless$' | sed 's/^/KNOWN:/'"]
@@ -63,7 +63,7 @@ Singleton {
         onExited: code => { if (code === 127) root.hasNmcli = false }
     }
 
-    // 2) Redes cercanas (cache de NM; `scan()` fuerza un rescan).
+    // 2) Nearby networks (NM cache; `scan()` forces a rescan).
     Process {
         id: list
         property bool rescan: false
@@ -94,7 +94,7 @@ Singleton {
     }
     Timer { id: later; interval: 1500; onTriggered: root.refresh() }
 
-    // Conectar: guardada → `con up`; abierta → directo; con clave → `dev wifi connect … password`.
+    // Connect: saved -> `con up`; open -> direct; with password -> `dev wifi connect … password`.
     function connect(ssid, password) {
         error = ""; connecting = ssid
         const isKnown = known.indexOf(ssid) >= 0
@@ -114,7 +114,7 @@ Singleton {
             if (code !== 0) {
                 const t = connErr.text.toLowerCase()
                 root.error = (t.includes("secrets") || t.includes("password") || t.includes("802-11-wireless-security"))
-                    ? I18n.tr("Contraseña incorrecta") : I18n.tr("No se pudo conectar")
+                    ? I18n.tr("Incorrect password") : I18n.tr("Could not connect")
             }
             root.connecting = ""
             root.refresh()
