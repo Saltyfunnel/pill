@@ -2,20 +2,20 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import "../../Common"
 
-// Wi-Fi: fila con red actual, señal e interruptor; al tocarla se despliegan las redes
-// cercanas. Vive en el panel de estado (Internet); visible si hay placa Wi-Fi.
+// Wi-Fi: row with current network, signal and switch; tapping unfolds nearby
+// networks. Lives in the status panel (Internet); visible if wireless card exists.
 Column {
     id: root
-    property bool active: false            // menú abierto: consultar NetworkManager
+    property bool active: false             // menu open: query NetworkManager
     property bool expanded: false
-    property string askFor: ""             // SSID que pide contraseña
-    property int radius: 18                // igual que las tarjetas del panel de estado
+    property string askFor: ""              // SSID asking for password
+    property int radius: 18                 // same as status panel cards
     spacing: 6
     visible: Network.hasNmcli && Network.hasWifi
     onActiveChanged: { active ? Network.acquire() : Network.release(); if (!active) { expanded = false; askFor = ""; Network.error = "" } }
     Component.onDestruction: if (active) Network.release()
 
-    // Fila principal.
+    // Main row.
     Rectangle {
         width: parent.width; height: 52; radius: root.radius
         color: rowMouse.containsMouse ? Theme.hover : Theme.surface
@@ -34,9 +34,9 @@ Column {
             Text { width: parent.width; elide: Text.ElideRight; text: "Wi-Fi"; color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel; font.weight: Font.DemiBold }
             Text {
                 width: parent.width; elide: Text.ElideRight
-                text: !Network.wifiEnabled ? I18n.tr("Desactivado")
-                    : Network.connecting ? I18n.tr("Conectando a %1…", Network.connecting)
-                    : Network.ssid || I18n.tr("Sin conexión")
+                text: !Network.wifiEnabled ? I18n.tr("Disabled")
+                    : Network.connecting ? I18n.tr("Connecting to %1…", Network.connecting)
+                    : Network.ssid || I18n.tr("Offline")
                 color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
             }
         }
@@ -49,7 +49,7 @@ Column {
         MSwitch { id: sw; anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter; checked: Network.wifiEnabled; onToggled: v => Network.setEnabled(v) }
     }
 
-    // Lista de redes.
+    // Network list.
     Rectangle {
         width: parent.width
         visible: root.expanded && Network.wifiEnabled
@@ -67,7 +67,7 @@ Column {
                 Text {
                     visible: Network.networks.length === 0
                     x: 12; height: 36; verticalAlignment: Text.AlignVCenter
-                    text: I18n.tr("Buscando redes…"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
+                    text: I18n.tr("Searching for networks…"); color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
                 }
                 Repeater {
                     model: Network.networks.slice(0, 12)
@@ -103,7 +103,7 @@ Column {
                                 }
                             }
                         }
-                        // Contraseña (solo para la red elegida).
+                        // Password (only for chosen network).
                         Rectangle {
                             visible: root.askFor === net.modelData.ssid
                             width: parent.width; height: visible ? 40 : 0; radius: 20
@@ -118,7 +118,7 @@ Column {
                                 color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
                                 clip: true
                                 cursorDelegate: Rectangle { width: 2; radius: 1; color: Theme.textPrimary; visible: pass.activeFocus }
-                                Text { visible: !pass.text; text: I18n.tr("Contraseña"); color: Theme.textSecondary; font: pass.font }
+                                Text { visible: !pass.text; text: I18n.tr("Password"); color: Theme.textSecondary; font: pass.font }
                                 onAccepted: go.submit()
                             }
                             Rectangle {
@@ -127,7 +127,7 @@ Column {
                                 anchors.right: parent.right; anchors.rightMargin: 4; anchors.verticalCenter: parent.verticalCenter
                                 width: 76; height: 32; radius: 16
                                 color: pass.text.length > 0 ? Theme.fill : Theme.track
-                                Text { anchors.centerIn: parent; text: I18n.tr("Unirse"); color: pass.text.length > 0 ? Theme.onAccent : Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold }
+                                Text { anchors.centerIn: parent; text: I18n.tr("Join"); color: pass.text.length > 0 ? Theme.onAccent : Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: go.submit() }
                             }
                         }
