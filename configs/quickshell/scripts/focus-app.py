@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Trae al frente la ventana de una app (por desktop entry o nombre): si estaba
-# minimizada (special:minimized) la devuelve al escritorio actual, y la enfoca.
+# Brings an app window to the front (by desktop entry or name): if it was
+# minimized (special:minimized) it returns it to the current workspace, and focuses it.
 import json, subprocess, sys
 
 def hypr(*a):
@@ -16,7 +16,7 @@ def match(c):
 cands = [c for c in clients if match(c)]
 if not cands:
     sys.exit(0)
-# La usada más recientemente primero.
+# Most recently used first.
 c = min(cands, key=lambda c: c.get("focusHistoryID", 999))
 addr = c["address"]
 ws = (c.get("workspace") or {}).get("name", "")
