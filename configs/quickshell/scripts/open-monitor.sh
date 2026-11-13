@@ -1,6 +1,6 @@
 #!/bin/sh
-# Abre un monitor del sistema: primero apps gráficas; si no hay, btop/htop en una terminal.
-# Sale con 1 si no encuentra ninguno (la isla lo avisa).
+# Opens a system monitor: first graphical apps; if none, btop/htop in a terminal.
+# Exits with 1 if none is found (the island notifies it).
 for a in missioncenter gnome-system-monitor plasma-systemmonitor; do
     command -v "$a" >/dev/null 2>&1 && { setsid -f "$a" >/dev/null 2>&1; exit 0; }
 done
