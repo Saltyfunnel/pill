@@ -79,6 +79,14 @@ Item {
                     }
                 }
             }
+            // Weather on the right side of the header.
+            // Set the town here, e.g. town: "Edinburgh" (empty = auto-detect by IP).
+            WeatherChip {
+                id: weather
+                town: ""
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
         Reveal { step: 1; width: parent.width; height: search.implicitHeight
             SearchSection { id: search; width: parent.width; onLaunched: root.done() } }
