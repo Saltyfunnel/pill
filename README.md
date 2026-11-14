@@ -1,6 +1,6 @@
-# Saltyfunnels Shell
+# Saltyfunnels Pill
 
-A minimal Arch Linux + Hyprland desktop built around a single Quickshell "island".
+A minimal Arch Linux + Hyprland desktop built around a single Quickshell "Pill".
 All colours are generated from your wallpaper with matugen.
 
 ## The island
