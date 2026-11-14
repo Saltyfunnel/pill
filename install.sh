@@ -363,6 +363,8 @@ deploy "$CONFIGS_SRC/gtk-4.0"     "$CONFIG_DIR/gtk-4.0"     "GTK 4 config"
 deploy "$CONFIGS_SRC/Thunar"      "$CONFIG_DIR/Thunar"      "Thunar config"
 deploy "$SCRIPTS_SRC"             "$CONFIG_DIR/scripts"     "User scripts"
 as_user find "$CONFIG_DIR/scripts" -type f -exec chmod +x {} + 2>/dev/null || true
+# Quickshell runs its helper scripts directly, so they need the executable bit too (git stores them as 644)
+as_user find "$CONFIG_DIR/quickshell/scripts" -type f \( -name '*.py' -o -name '*.sh' \) -exec chmod +x {} + 2>/dev/null || true
 as_user touch "$CONFIG_DIR/kitty/colors.conf"
 
 # cava: terminal config + matugen theme (the Quickshell equalizer uses its own config)
