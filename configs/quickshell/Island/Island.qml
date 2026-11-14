@@ -231,7 +231,7 @@ PanelWindow {
         // Elastic: while dragging, pill stretches and shifts slightly with finger.
         readonly property real pull: hoverZone.pulling ? hoverZone.dragDy / (1 + hoverZone.dragDy / 70) : 0
         readonly property real rubber: hoverZone.dragging ? hoverZone.dragDx / (1 + Math.abs(hoverZone.dragDx) / 60) : 0
-        width: win.expanded ? Theme.expandedW
+        width: win.expanded ? (menu.page === "wall" ? Theme.wallW : Theme.expandedW)
              : win.panel ? Theme.expandedW
              : Math.max(Theme.compactW, compact.implicitWidth + Theme.compactPadX * 2) + Math.abs(rubber) * 1.2
         height: win.expanded ? Math.min(menu.implicitHeight, Theme.maxExpandedH)
@@ -255,6 +255,8 @@ PanelWindow {
         Behavior on y { enabled: !hoverZone.pulling; NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
 
         focus: win.open
+        // The wallpaper and launcher pages handle their own keys (arrows, typing, Enter, Tab).
+        Keys.forwardTo: !win.expanded ? [] : menu.page === "wall" ? [menu.wallView] : menu.page === "launch" ? [menu.launchView] : []
         // Escape in a subpage (workspaces, clipboard, calendar...) returns to menu;
         // in main menu closes the island.
         Keys.onEscapePressed: { if (win.expanded && menu.page !== "menu") menu.page = "menu"; else win.collapse() }
@@ -272,7 +274,7 @@ PanelWindow {
 
         IslandMenu {
             id: menu
-            width: Theme.expandedW
+            width: menu.page === "wall" ? Theme.wallW : Theme.expandedW
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
             open: win.expanded
@@ -317,6 +319,16 @@ PanelWindow {
                 // Super+V: opens island on clipboard (or closes if already there).
                 if (win.expanded && menu.page === "clip") win.collapse()
                 else { win.panel = false; win.expanded = true; menu.showClipboard() }
+            }
+            else if (cmd === "wallpaper" || cmd === "wallpaper-open") {
+                // Super+W: opens island on the wallpaper picker (or closes if already there).
+                if (cmd === "wallpaper" && win.expanded && menu.page === "wall") win.collapse()
+                else { win.panel = false; win.expanded = true; menu.showWallpaper() }
+            }
+            else if (cmd === "launcher" || cmd === "launcher-open") {
+                // Super+D: opens island on the app launcher (or closes if already there).
+                if (cmd === "launcher" && win.expanded && menu.page === "launch") win.collapse()
+                else { win.panel = false; win.expanded = true; menu.showLauncher() }
             }
             else if (cmd === "close") win.collapse()
             else if (cmd === "status" || cmd === "apps") {

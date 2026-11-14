@@ -9,10 +9,16 @@ Item {
     signal done()
     property bool open: false
     readonly property bool searchFocused: search.hasFocus
-    property string page: "menu"   // "menu" | "desks" | "clip" | "cal" | "notes" | "emoji"
-    implicitHeight: (page === "desks" ? desks.implicitHeight : page === "clip" ? clip.implicitHeight : page === "cal" ? cal.implicitHeight : page === "notes" ? notes.implicitHeight : page === "emoji" ? emoji.implicitHeight : col.implicitHeight) + Theme.padPanel * 2
+    property string page: "menu"   // "menu" | "desks" | "clip" | "cal" | "notes" | "emoji" | "wall" | "launch" | "shot"
+    implicitHeight: (page === "desks" ? desks.implicitHeight : page === "clip" ? clip.implicitHeight : page === "cal" ? cal.implicitHeight : page === "notes" ? notes.implicitHeight : page === "emoji" ? emoji.implicitHeight : page === "wall" ? wall.implicitHeight : page === "launch" ? launch.implicitHeight : page === "shot" ? shot.implicitHeight : col.implicitHeight) + Theme.padPanel * 2
+
+    // Keys for the wallpaper page are forwarded from the pill (see Island.qml).
+    property alias wallView: wall
+    property alias launchView: launch
 
     function showClipboard() { clip.refresh(); page = "clip" }
+    function showWallpaper() { wall.refresh(); page = "wall" }
+    function showLauncher() { launch.reset(); page = "launch" }
 
     // Search bar does not focus automatically: it activates on click.
     function opened() { search.reset() }
@@ -27,7 +33,7 @@ Item {
     // With reduceMotion, show everything at once (no staggering).
     onOpenChanged: {
         if (open && Theme.durStagger === 0) stage = 6
-        if (!open) { stage = 0; page = "menu"; actions.reset(); notes.reset(); emoji.reset() }
+        if (!open) { stage = 0; page = "menu"; actions.reset(); notes.reset(); emoji.reset(); wall.reset(); launch.reset() }
     }
 
     SystemClock { id: clock; precision: SystemClock.Minutes }
@@ -86,7 +92,10 @@ Item {
                 onDone: root.done(); onDesktops: { desks.refresh(); root.page = "desks" }
                 onClipboard: root.showClipboard()
                 onNotes: root.page = "notes"
-                onEmoji: { emoji.reset(); root.page = "emoji" } } }
+                onEmoji: { emoji.reset(); root.page = "emoji" }
+                onWallpaper: root.showWallpaper()
+                onLauncher: root.showLauncher()
+                onCapture: root.page = "shot" } }
         Reveal { step: 4; width: parent.width; height: actions.implicitHeight
             ActionsSection { id: actions; anchors.horizontalCenter: parent.horizontalCenter; onDone: root.done()
                 } }
@@ -160,5 +169,46 @@ Item {
         Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
         Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
         onBack: root.page = "menu"
+    }
+
+    WallpaperView {
+        id: wall
+        x: root.page === "wall" ? 20 : root.width * 0.3
+        y: Theme.padPanel
+        width: root.width - 40
+        opacity: root.page === "wall" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "wall"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        onBack: root.page = "menu"
+        onApplied: root.done()
+    }
+
+    LauncherView {
+        id: launch
+        x: root.page === "launch" ? 20 : root.width * 0.3
+        y: Theme.padPanel
+        width: root.width - 40
+        opacity: root.page === "launch" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "launch"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        onDone: root.done()
+    }
+
+    ShotView {
+        id: shot
+        x: root.page === "shot" ? 20 : root.width * 0.3
+        y: Theme.padPanel
+        width: root.width - 40
+        opacity: root.page === "shot" ? 1 : 0
+        visible: opacity > 0
+        enabled: root.page === "shot"
+        Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
+        Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
+        onBack: root.page = "menu"
+        onDone: root.done()
     }
 }

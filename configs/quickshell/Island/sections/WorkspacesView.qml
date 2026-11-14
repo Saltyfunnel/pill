@@ -1,0 +1,311 @@
+import QtQuick
+import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Io
+import "../../Common"
+
+// Workspace view inside the island: grid of workspaces with window icons,
+// active one outlined, and a "+" for a new one.
+// Windows (each icon is ONE window, also in multi-window or grouped apps):
+//   click → focus it · hold or drag → move to another workspace (or the "+")
+//   × on hover → close it (graceful Hyprland close, never kill)
+//   Esc or drop outside a workspace → cancel. Before acting, window-action.py
+//   re-queries Hyprland: if the window no longer exists, it does nothing.
+Item {
+    id: root
+    signal back()
+    signal picked()
+    implicitHeight: col.implicitHeight
+
+    function refresh() { cancelDrag(); notice = ""; Hyprland.refreshToplevels(); Hyprland.refreshWorkspaces() }
+
+    // --- Window Dragging ---
+    property string dragAddr: ""             // address of dragged window ("" = none)
+    property string dragIcon: ""
+    property int dragFrom: -1                // source workspace
+    property real ghostX: 0                  // floating icon center (grid coordinates)
+    property real ghostY: 0
+    property var target: null                // workspace id, "new" (the +), or null
+    property string notice: ""
+    readonly property bool windowDrag: dragAddr !== ""
+    readonly property string actionScript: Qt.resolvedUrl("../../scripts/window-action.py").toString().replace("file://", "")
+
+    function startDrag(addr, icon, fromWs, gx, gy) {
+        dragAddr = addr; dragIcon = icon; dragFrom = fromWs; notice = ""
+        moveDrag(gx, gy)
+        keyCatcher.forceActiveFocus()              // Esc cancels drag (does not close island)
+    }
+    function moveDrag(gx, gy) { ghostX = gx; ghostY = gy; target = grid.targetAt(gx, gy) }
+    function cancelDrag() { dragAddr = ""; target = null; dragFrom = -1 }
+    function dropDrag() {
+        const addr = dragAddr, t = target, from = dragFrom
+        cancelDrag()
+        if (!addr || t === null || t === from) return            // outside or same workspace: cancel
+        act(["move", addr, t === "new" ? "emptynm" : String(t)])
+    }
+    function closeWindow(addr) { if (addr) act(["close", addr]) }
+    function focusWindow(addr) {
+        const a = String(addr).startsWith("0x") ? addr : "0x" + addr
+        if (!/^0x[0-9a-fA-F]+$/.test(a)) return
+        Quickshell.execDetached(["hyprctl", "dispatch", 'hl.dsp.focus({ window = "address:' + a + '" })'])
+        root.picked()
+    }
+    function act(args) {
+        if (actProc.running) return                            // one action at a time
+        actProc.command = ["python3", root.actionScript].concat(args)
+        actProc.running = true
+    }
+    Process {
+        id: actProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let r = null
+                try { r = JSON.parse(text) } catch (e) { r = null }
+                if (r && !r.ok && r.reason === "gone") root.notice = I18n.tr("That window no longer exists.")
+                else if (!r || !r.ok) root.notice = I18n.tr("Could not complete action.")
+                Hyprland.refreshToplevels(); Hyprland.refreshWorkspaces()
+            }
+        }
+    }
+    Timer { running: root.notice !== ""; interval: 2600; onTriggered: root.notice = "" }
+    // If the dragged window disappears (closed itself), drag cancels.
+    Connections {
+        target: Hyprland.toplevels
+        function onValuesChanged() {
+            if (root.windowDrag && !Hyprland.toplevels.values.some(t => String(t.address) === root.dragAddr)) root.cancelDrag()
+        }
+    }
+    Item { id: keyCatcher; Keys.onEscapePressed: e => { if (root.windowDrag) { root.cancelDrag(); e.accepted = true } else e.accepted = false } }
+
+    // Visual order (IDs). Follows Hyprland except while dragging.
+    property var order: []
+    property bool dragged: false
+    property bool snap: false         // instant rearrangement after reordering (no return animation)
+    Connections {
+        target: Workspaces
+        function onReordered() { root.snap = true; root.order = root.ids; Qt.callLater(() => root.snap = false) }
+    }
+    readonly property var ids: Workspaces.list.map(w => w.id)
+    onIdsChanged: if (!dragged) order = ids
+    Component.onCompleted: order = ids
+    function moveTo(id, slot) {
+        dragged = true
+        const from = order.indexOf(id)
+        if (from < 0 || from === slot) return
+        const o = order.slice(); o.splice(from, 1); o.splice(slot, 0, id)
+        order = o
+    }
+    function commit() {
+        const o = order
+        // No changes: nothing to do. With changes: move windows in Hyprland.
+        if (o.length === ids.length && !o.every((id, i) => id === ids[i])) Workspaces.reorder(o)
+        else order = ids
+    }
+
+    function iconFor(t) {
+        let cls = ""
+        if (t.wayland && t.wayland.appId) cls = t.wayland.appId
+        else if (t.lastIpcObject && t.lastIpcObject["class"]) cls = t.lastIpcObject["class"]
+        const e = cls ? DesktopEntries.heuristicLookup(cls) : null
+        const p = Quickshell.iconPath(e ? e.icon : cls, true)
+        return p !== "" ? p : Quickshell.iconPath("application-x-executable", true)
+    }
+
+    Column {
+        id: col
+        width: parent.width
+        spacing: 16
+
+        Item {
+            width: parent.width; height: 32
+            Rectangle {
+                id: backBtn
+                width: 32; height: 32; radius: 16
+                color: backMouse.containsMouse ? Theme.hover : Theme.surface
+                Icon { anchors.centerIn: parent; name: "back"; size: 18 }
+                MouseArea { id: backMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.back() }
+            }
+            Text {
+                anchors.centerIn: parent
+                text: I18n.tr("Workspaces")
+                color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontClock; font.weight: Font.DemiBold
+            }
+        }
+
+        // Tiles in calculated positions (not Grid) to allow dragging: holding and
+        // dragging a workspace reorders it; others shift with live easing.
+        // On drop in another position, content actually moves in Hyprland.
+        Item {
+            id: grid
+            readonly property int columns: 3
+            readonly property int gap: 8
+            readonly property int tileH: 76
+            readonly property real tileW: (col.width - gap * (columns - 1)) / columns
+            width: col.width
+            height: Math.ceil((root.order.length + 1) / columns) * (tileH + gap) - gap
+            function slotX(i) { return (i % columns) * (tileW + gap) }
+            function slotY(i) { return Math.floor(i / columns) * (tileH + gap) }
+            function slotAt(px, py) {
+                // px, py: center of dragged tile
+                const c = Math.max(0, Math.min(columns - 1, Math.floor(px / (tileW + gap))))
+                const r = Math.max(0, Math.floor(py / (tileH + gap)))
+                return Math.min(root.order.length - 1, r * columns + c)
+            }
+            // Destination of a window dropped at (px, py): a workspace, "new" (the +), or null.
+            function targetAt(px, py) {
+                if (px < 0 || py < 0 || px > width || py > height) return null
+                const c = Math.floor(px / (tileW + gap)), r = Math.floor(py / (tileH + gap))
+                if (c >= columns || px - c * (tileW + gap) > tileW || py - r * (tileH + gap) > tileH) return null   // in a gap
+                const i = r * columns + c
+                if (i < root.order.length) return root.order[i]
+                return i === root.order.length ? "new" : null
+            }
+
+            Repeater {
+                model: Workspaces.list
+                delegate: Rectangle {
+                    id: tile
+                    required property var modelData
+                    readonly property bool active: modelData.id === Workspaces.activeId
+                    readonly property int slot: Math.max(0, root.order.indexOf(modelData.id))
+                    readonly property bool dragging: tileMouse.drag.active
+                    width: grid.tileW; height: grid.tileH; radius: 14
+                    x: grid.slotX(slot); y: grid.slotY(slot)
+                    z: dragging ? 10 : 0
+                    scale: dragging ? 1.04 : 1
+                    readonly property bool dropTarget: root.windowDrag && root.target === modelData.id && modelData.id !== root.dragFrom
+                    readonly property bool validTarget: root.windowDrag && modelData.id !== root.dragFrom
+                    color: dropTarget ? Theme.fill : (tileMouse.containsMouse || dragging || validTarget ? Theme.hover : Theme.surface)
+                    opacity: root.windowDrag && modelData.id === root.dragFrom ? 0.6 : 1
+                    border.width: active && !dropTarget ? 2 : 0
+                    border.color: Theme.textPrimary
+                    Behavior on x { enabled: !tile.dragging && !root.snap; NumberAnimation { duration: Theme.durFast + 100; easing.type: Easing.OutQuint } }
+                    Behavior on y { enabled: !tile.dragging && !root.snap; NumberAnimation { duration: Theme.durFast + 100; easing.type: Easing.OutQuint } }
+                    Behavior on scale { NumberAnimation { duration: Theme.durFast; easing.type: Easing.OutCubic } }
+                    Text {
+                        x: 10; y: 8
+                        text: tile.modelData.name || tile.modelData.id
+                        color: tile.dropTarget ? Theme.onAccent : Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontTiny; font.weight: Font.Medium
+                    }
+                    MouseArea {
+                        id: tileMouse
+                        anchors.fill: parent; hoverEnabled: true
+                        cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+                        drag.target: tile
+                        drag.threshold: 6
+                        drag.minimumX: 0; drag.maximumX: grid.width - tile.width
+                        drag.minimumY: 0; drag.maximumY: grid.height - tile.height
+                        onPositionChanged: if (drag.active) root.moveTo(tile.modelData.id, grid.slotAt(tile.x + tile.width / 2, tile.y + tile.height / 2))
+                        onReleased: {
+                            if (tile.dragging || root.dragged) {
+                                Qt.callLater(() => root.dragged = false)   // prevent click from counting
+                                tile.x = Qt.binding(() => grid.slotX(tile.slot)); tile.y = Qt.binding(() => grid.slotY(tile.slot))
+                                root.commit()
+                            }
+                        }
+                        onClicked: if (!root.dragged) { Workspaces.goTo(tile.modelData.id); root.picked() }
+                    }
+                    // One window per icon (up to 4; with more, 3 and "+N").
+                    Row {
+                        anchors.centerIn: parent; anchors.verticalCenterOffset: 6
+                        spacing: 6
+                        readonly property var wins: tile.modelData.toplevels ? tile.modelData.toplevels.values : []
+                        readonly property int shownN: wins.length > 4 ? 3 : wins.length
+                        Repeater {
+                            model: parent.wins.slice(0, parent.shownN)
+                            delegate: Item {
+                                id: winItem
+                                required property var modelData
+                                readonly property string addr: String(modelData.address)
+                                readonly property string icon: root.iconFor(modelData)
+                                readonly property bool lifted: root.dragAddr === addr
+                                width: 26; height: 26
+                                Image {
+                                    anchors.centerIn: parent
+                                    width: 24; height: 24; sourceSize: Qt.size(48, 48)
+                                    source: winItem.icon
+                                    opacity: winItem.lifted ? 0.25 : 1
+                                    scale: wm.pressed && !winItem.lifted ? 0.9 : 1
+                                    Behavior on scale { NumberAnimation { duration: Theme.durMicro } }
+                                }
+                                MouseArea {
+                                    id: wm
+                                    anchors.fill: parent; anchors.margins: -2
+                                    hoverEnabled: true
+                                    preventStealing: true
+                                    cursorShape: root.windowDrag ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+                                    property real px: 0; property real py: 0
+                                    property bool wasDrag: false      // this touch was a drag: click doesn't focus
+                                    function gpos(m) { return mapToItem(grid, m.x, m.y) }
+                                    onPressed: m => { px = m.x; py = m.y; wasDrag = false; hold.restart() }
+                                    onPositionChanged: m => {
+                                        const g = gpos(m)
+                                        if (winItem.lifted) root.moveDrag(g.x, g.y)
+                                        else if (pressed && !root.windowDrag && Math.hypot(m.x - px, m.y - py) > 6) { hold.stop(); root.startDrag(winItem.addr, winItem.icon, tile.modelData.id, g.x, g.y) }
+                                    }
+                                    onReleased: { hold.stop(); if (winItem.lifted) { wasDrag = true; root.dropDrag() } }
+                                    onCanceled: { hold.stop(); if (winItem.lifted) root.cancelDrag() }
+                                    onClicked: if (!wasDrag && !winItem.lifted && !root.windowDrag) root.focusWindow(winItem.addr)
+                                    Timer {
+                                        id: hold; interval: 380
+                                        onTriggered: if (wm.pressed && !root.windowDrag) { const g = wm.mapToItem(grid, wm.px, wm.py); root.startDrag(winItem.addr, winItem.icon, tile.modelData.id, g.x, g.y) }
+                                    }
+                                }
+                                // Close: × on hover (not during drag).
+                                Rectangle {
+                                    visible: (wm.containsMouse || xm.containsMouse) && !root.windowDrag
+                                    // In the corner, almost outside the icon: doesn't block grab point.
+                                    x: parent.width - 6; y: -10
+                                    width: 16; height: 16; radius: 8
+                                    color: xm.containsMouse ? Theme.fillHover : Theme.fill
+                                    Icon { anchors.centerIn: parent; name: "dismiss"; size: 10; tone: "white" }
+                                    MouseArea { id: xm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeWindow(winItem.addr) }
+                                    Accessible.name: I18n.tr("Close window")
+                                    Accessible.role: Accessible.Button
+                                }
+                            }
+                        }
+                        Text {
+                            visible: parent.wins.length > parent.shownN
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "+" + (parent.wins.length - parent.shownN)
+                            color: tile.dropTarget ? Theme.onAccent : Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontTiny
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                x: grid.slotX(root.order.length); y: grid.slotY(root.order.length)
+                width: grid.tileW; height: grid.tileH; radius: 14
+                Behavior on x { NumberAnimation { duration: Theme.durFast + 100; easing.type: Easing.OutQuint } }
+                Behavior on y { NumberAnimation { duration: Theme.durFast + 100; easing.type: Easing.OutQuint } }
+                readonly property bool dropTarget: root.windowDrag && root.target === "new"
+                color: dropTarget ? Theme.fill : (root.windowDrag ? Theme.hover : "transparent")
+                border.width: root.windowDrag ? 0 : 1.5; border.color: plusMouse.containsMouse ? Theme.textSecondary : Theme.track
+                Icon { anchors.centerIn: parent; name: "plus"; tone: parent.dropTarget ? "white" : "gray"; size: 22 }
+                MouseArea {
+                    id: plusMouse
+                    anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                    onClicked: { Workspaces.goEmpty(); root.picked() }
+                }
+            }
+            // Dragged window: its icon follows the pointer.
+            Image {
+                visible: root.windowDrag
+                z: 20
+                x: root.ghostX - width / 2; y: root.ghostY - height / 2
+                width: 34; height: 34; sourceSize: Qt.size(68, 68)
+                source: root.dragIcon
+            }
+        }
+        Text {
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.WordWrap
+            text: root.notice !== "" ? root.notice
+                : root.windowDrag ? I18n.tr("Drop it on another workspace to move it · Esc cancels")
+                : I18n.tr("Drag a workspace to reorder it, or an app to move it to another")
+            color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontTiny
+        }
+    }
+}

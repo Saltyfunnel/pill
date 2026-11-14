@@ -524,13 +524,22 @@ Item {
                     }
                 }
             }
-            MiniRow {
-                icon: "folder"; label: I18n.tr("Disk")
-                frac: root.r ? root.r.diskUsed / root.r.diskTotal : 0
-                value: root.r ? I18n.tr("%1 GB free", SysStatus.gib(root.r.diskTotal - root.r.diskUsed)) : "…"
-                hoverValue: root.r ? I18n.tr("%1 of %2 GB", SysStatus.gib(root.r.diskUsed), SysStatus.gib(root.r.diskTotal)) : "…"
-                clickable: true; hint: I18n.tr("open")
-                onActivated: Launch.open("files")
+            // One row per internal disk (falls back to the root filesystem alone).
+            Repeater {
+                model: root.r ? (root.r.disks && root.r.disks.length > 0 ? root.r.disks
+                                 : [{ name: "/", used: root.r.diskUsed, total: root.r.diskTotal }]) : []
+                delegate: MiniRow {
+                    id: dr
+                    required property var modelData
+                    required property int index
+                    icon: "folder"
+                    label: (root.r.disks && root.r.disks.length > 1) ? dr.modelData.name : I18n.tr("Disk")
+                    frac: dr.modelData.total > 0 ? dr.modelData.used / dr.modelData.total : 0
+                    value: I18n.tr("%1 GB free", SysStatus.gib(dr.modelData.total - dr.modelData.used))
+                    hoverValue: I18n.tr("%1 of %2 GB", SysStatus.gib(dr.modelData.used), SysStatus.gib(dr.modelData.total))
+                    clickable: true; hint: I18n.tr("open")
+                    onActivated: Launch.open("files")
+                }
             }
             MiniRow {
                 visible: !!root.bat
