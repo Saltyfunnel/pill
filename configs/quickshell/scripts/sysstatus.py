@@ -16,6 +16,45 @@ def cpu_times():
     idle = v[3] + v[4]
     return sum(v), idle
 
+DISK_FS = {"ext2", "ext3", "ext4", "btrfs", "xfs", "f2fs", "zfs", "ntfs", "ntfs3", "fuseblk", "exfat", "vfat"}
+
+def is_external(dev):
+    """True for removable media and USB drives (pen drives, external disks)."""
+    try:
+        name = os.path.basename(os.path.realpath(dev))
+        node = os.path.realpath(f"/sys/class/block/{name}")
+        if "/usb" in node: return True
+        disk = os.path.basename(os.path.dirname(node)) if os.path.exists(f"{node}/partition") else name
+        with open(f"/sys/block/{disk}/removable") as f: return f.read().strip() == "1"
+    except OSError:
+        return False
+
+def disks():
+    """Every mounted internal disk (one entry per device): [{name, mount, used, total}]."""
+    seen = {}
+    try:
+        with open("/proc/mounts") as f: lines = f.read().splitlines()
+    except OSError:
+        return []
+    for l in lines:
+        p = l.split()
+        if len(p) < 3 or not p[0].startswith("/dev/") or p[2] not in DISK_FS: continue
+        dev = os.path.realpath(p[0])
+        mount = p[1].replace("\\040", " ")
+        if mount.startswith(("/boot", "/efi")) or "/loop" in dev: continue
+        if is_external(dev): continue
+        if dev in seen and len(seen[dev]) <= len(mount): continue     # subvolumes / bind mounts: keep the shortest path
+        seen[dev] = mount
+    out = []
+    for dev, mount in seen.items():
+        try: du = shutil.disk_usage(mount)
+        except OSError: continue
+        if du.total == 0: continue
+        out.append({"name": "/" if mount == "/" else os.path.basename(mount.rstrip("/")) or mount,
+                    "mount": mount, "used": du.used, "total": du.total})
+    out.sort(key=lambda d: (d["mount"] != "/", d["mount"]))              # root first
+    return out
+
 def resources():
     t0, i0 = cpu_times(); time.sleep(0.25); t1, i1 = cpu_times()
     cpu = 0 if t1 == t0 else round(100 * (1 - (i1 - i0) / (t1 - t0)))
@@ -49,7 +88,7 @@ def resources():
                     pass
             break
     return {"cpu": cpu, "memUsed": (total - avail) * 1024, "memTotal": total * 1024,
-            "diskUsed": du.used, "diskTotal": du.total, "temp": temp}
+            "diskUsed": du.used, "diskTotal": du.total, "disks": disks(), "temp": temp}
 
 def nm_fields(line):
     out, cur, i = [], "", 0

@@ -1,3 +1,4 @@
+
 #!/bin/sh
 # Opens the default browser or file manager.
 #   open-default.sh browser | files
@@ -14,6 +15,11 @@ case "${1:-}" in
         command -v xdg-open >/dev/null 2>&1 && xdg-open "https://duckduckgo.com" >/dev/null 2>&1 && exit 0
         echo "Could not open the browser." >&2; exit 1 ;;
     files)
+        # Thunar is the file manager this setup ships with; the xdg default can point at a terminal app (yazi, ranger...).
+        if command -v thunar >/dev/null 2>&1; then
+            nohup thunar "$HOME" >/dev/null 2>&1 &
+            exit 0
+        fi
         f=$(xdg-mime query default inode/directory 2>/dev/null || true)
         launch_desktop "$f" "$HOME" && exit 0
         command -v xdg-open >/dev/null 2>&1 && xdg-open "$HOME" >/dev/null 2>&1 && exit 0
