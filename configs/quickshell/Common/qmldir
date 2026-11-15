@@ -1,0 +1,20 @@
+singleton Theme 1.0 Theme.qml
+singleton DisplayState 1.0 DisplayState.qml
+singleton Cursor 1.0 Cursor.qml
+MSlider 1.0 MSlider.qml
+Icon 1.0 Icon.qml
+singleton Workspaces 1.0 Workspaces.qml
+singleton Apps 1.0 Apps.qml
+singleton Media 1.0 Media.qml
+singleton Recorder 1.0 Recorder.qml
+MSwitch 1.0 MSwitch.qml
+singleton IslandBus 1.0 IslandBus.qml
+singleton Network 1.0 Network.qml
+singleton SysStatus 1.0 SysStatus.qml
+singleton Notifs 1.0 Notifs.qml
+singleton QuickItems 1.0 QuickItems.qml
+singleton Clipboard 1.0 Clipboard.qml
+singleton Notes 1.0 Notes.qml
+singleton Launch 1.0 Launch.qml
+singleton I18n 1.0 I18n.qml
+singleton Laptop 1.0 Laptop.qml
