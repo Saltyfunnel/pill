@@ -192,6 +192,7 @@ hl.bind(mod .. " + A", hl.dsp.exec_cmd("python3 ~/.config/scripts/chat.py"))
 hl.bind(mod .. " + B", hl.dsp.exec_cmd(br))
 hl.bind(mod .. " + I", hl.dsp.exec_cmd(term .. " -e btop"))
 hl.bind(mod .. " + S", hl.dsp.exec_cmd("spotify-launcher"))
+hl.bind(mod .. " + L", hl.dsp.exec_cmd("hyprlock"))
 
 -- trash
 hl.bind(mod .. " + ALT + E", hl.dsp.exec_cmd(
