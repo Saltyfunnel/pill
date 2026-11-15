@@ -280,9 +280,9 @@ fi
 
 print_phase "Installing packages"
 
+# Notifications are handled by the Quickshell island itself (no mako needed).
 CORE=(hyprland hyprpaper xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-      polkit-kde-agent qt6-5compat qt6-declarative qt6-svg qt5-wayland qt6-wayland python-pyqt6
-      mako)
+      polkit-kde-agent qt6-5compat qt6-declarative qt6-svg qt5-wayland qt6-wayland python-pyqt6)
 LOGIN=(sddm hyprlock)
 AUDIO=(pipewire pipewire-pulse pipewire-alsa wireplumber playerctl pavucontrol)
 TERMINAL=(kitty fish starship fastfetch btop)
@@ -338,7 +338,7 @@ fi
 
 print_phase "Creating folders"
 
-for d in hypr kitty fish fish/conf.d mako scripts quickshell matugen/templates gtk-3.0 gtk-4.0 Thunar fastfetch zed/themes; do
+for d in hypr kitty fish fish/conf.d scripts quickshell matugen/templates gtk-3.0 gtk-4.0 Thunar fastfetch zed/themes; do
     as_user mkdir -p "$CONFIG_DIR/$d"
 done
 as_user mkdir -p "$USER_HOME/Pictures/Wallpapers" "$USER_HOME/.local/share/icons" "$USER_HOME/.cache"
@@ -355,7 +355,6 @@ deploy "$CONFIGS_SRC/quickshell"  "$CONFIG_DIR/quickshell"  "Quickshell bar"
 deploy "$CONFIGS_SRC/matugen"     "$CONFIG_DIR/matugen"     "matugen config & templates"
 deploy "$CONFIGS_SRC/kitty"       "$CONFIG_DIR/kitty"       "Kitty config"
 deploy "$CONFIGS_SRC/fish"        "$CONFIG_DIR/fish"        "Fish config"
-deploy "$CONFIGS_SRC/mako"        "$CONFIG_DIR/mako"        "Mako config"
 deploy "$CONFIGS_SRC/fastfetch"   "$CONFIG_DIR/fastfetch"   "Fastfetch config"
 deploy "$CONFIGS_SRC/starship"    "$CONFIG_DIR"             "Starship config"
 deploy "$CONFIGS_SRC/gtk-3.0"     "$CONFIG_DIR/gtk-3.0"     "GTK 3 config"
