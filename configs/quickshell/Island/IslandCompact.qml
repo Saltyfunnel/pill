@@ -3,18 +3,18 @@ import Quickshell.Widgets
 import Quickshell
 import "../Common"
 
-// Estado compacto: personaje + hora (HH:mm).
+// Compact state: clock (HH:mm) plus status items.
 Item {
     id: root
     property bool active: true
-    // Con una captura recién tomada la isla crece hacia abajo con una vista previa grande
-    // (la píldora anima ancho/alto con su Behavior; la fila de arriba queda igual).
+    // With a freshly taken screenshot the island grows downwards with a large preview
+    // (the pill animates width/height through its Behavior; the top row stays the same).
     readonly property bool hasShot: shot.ready && root.notif !== null && Recorder.notice === ""
     implicitWidth: Math.max(row.implicitWidth, hasShot ? shot.boxW + 2 * shot.side - Theme.compactPadX * 2 : 0)
     implicitHeight: Theme.compactH + (hasShot ? shot.boxH + shot.side : 0)
 
-    // Notificación en curso (la isla la muestra junto al personaje, sin taparlo).
-    readonly property var notif: Notifs.current   // cola en Common/Notifs.qml
+    // Current notification (the island shows it in the compact row).
+    readonly property var notif: Notifs.current   // queue lives in Common/Notifs.qml
     readonly property bool notifQuiet: notif !== null && Notifs.fromFocused(notif)
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
@@ -25,7 +25,7 @@ Item {
         spacing: 10
         Text {
             visible: !root.notif
-            enabled: false              // texto decorativo: sin interacción ni selección
+            enabled: false              // decorative text: no interaction or selection
             anchors.verticalCenter: parent.verticalCenter
             text: Qt.formatDateTime(clock.date, "HH:mm")
             color: Theme.textPrimary
@@ -34,8 +34,8 @@ Item {
             font.weight: Font.Medium
             font.features: { "tnum": 1 }
         }
-        // Batería (solo si hay una): barrita con el nivel; roja solo en crítica. Al enchufar,
-        // el relleno late unos segundos (animación de carga).
+        // Battery (only if present): small bar with the level; red only when critical.
+        // When plugged in, the fill pulses for a few seconds (charging animation).
         Row {
             id: batInd
             visible: Laptop.present && !root.notif && Recorder.notice === ""
@@ -68,7 +68,7 @@ Item {
                 font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.Medium; font.features: { "tnum": 1 }
             }
         }
-        // OSD de volumen/brillo: barrita fina con el nivel, junto al texto del aviso.
+        // Volume/brightness OSD: thin bar with the level, next to the notice text.
         Rectangle {
             visible: Laptop.notice !== "" && Laptop.level >= 0 && Recorder.notice === "" && !root.notif
             anchors.verticalCenter: parent.verticalCenter
@@ -79,7 +79,7 @@ Item {
                 Behavior on width { NumberAnimation { duration: Theme.durFast; easing.type: Easing.OutCubic } }
             }
         }
-        // Aviso de batería / brillo / tapa (crítica en rojo).
+        // Battery / brightness / lid notice (critical in red).
         Text {
             enabled: false
             visible: Laptop.notice !== "" && Recorder.notice === "" && !root.notif
@@ -91,7 +91,7 @@ Item {
             elide: Text.ElideRight
             width: Math.min(implicitWidth, 260)
         }
-        // Grabando: punto rojo que late + tiempo transcurrido.
+        // Recording: pulsing red dot + elapsed time.
         Row {
             visible: Recorder.recording && Recorder.notice === ""
             anchors.verticalCenter: parent.verticalCenter
@@ -101,7 +101,7 @@ Item {
                 width: 8; height: 8; radius: 4
                 color: Theme.recording
                 SequentialAnimation on opacity {
-                    // Con reduceMotion el punto queda fijo (sin latido continuo → menos CPU).
+                    // With reduceMotion the dot stays fixed (no continuous pulse, less CPU).
                     running: Recorder.recording && root.active && !Theme.reduceMotion
                     loops: Animation.Infinite
                     NumberAnimation { to: 0.35; duration: 900; easing.type: Easing.InOutSine }
@@ -109,16 +109,16 @@ Item {
                 }
             }
             Text {
-                enabled: false              // texto decorativo: sin interacción ni selección
+                enabled: false              // decorative text: no interaction or selection
                 anchors.verticalCenter: parent.verticalCenter
                 text: Recorder.elapsedText
                 color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
                 font.features: { "tnum": 1 }
             }
         }
-        // Mensaje breve (Guardado / Instalá wf-recorder).
+        // Short message (Saved / Install wf-recorder).
         Text {
-            enabled: false              // texto decorativo: sin interacción ni selección
+            enabled: false              // decorative text: no interaction or selection
             visible: Recorder.notice !== ""
             anchors.verticalCenter: parent.verticalCenter
             text: Recorder.notice
@@ -126,7 +126,7 @@ Item {
             elide: Text.ElideMiddle
             width: Math.min(implicitWidth, 230)
         }
-        // Sin internet: punto rojo fijo (desliz sobre la isla para ver el detalle).
+        // Notification toast: icon (or Nerd Font glyph fallback), text and action pills.
         Row {
             id: toast
             visible: root.notif !== null && Recorder.notice === ""
@@ -141,6 +141,16 @@ Item {
                 visible: status === Image.Ready
                 asynchronous: true; smooth: true
             }
+            // Glyph fallback when no real icon resolves (e.g. USB sticks).
+            Text {
+                enabled: false
+                anchors.verticalCenter: parent.verticalCenter
+                visible: text !== ""
+                text: Notifs.glyphOf(root.notif)
+                color: root.notifQuiet ? Theme.textSecondary : Theme.textPrimary
+                font.family: "Hack Nerd Font"
+                font.pixelSize: 16
+            }
             Text {
                 enabled: false
                 anchors.verticalCenter: parent.verticalCenter
@@ -153,7 +163,7 @@ Item {
                 font.family: Theme.font; font.pixelSize: Theme.fontLabel; font.weight: root.notifQuiet ? Font.Normal : Font.Medium
             }
             Repeater {
-                // Hasta 2 acciones como píldoras (la "default" es el clic en el aviso).
+                // Up to 2 actions as pills (the "default" one is the click on the notification).
                 model: root.notif && !root.notifQuiet ? Array.from(root.notif.actions || []).filter(a => a.identifier !== "default").slice(0, 2) : []
                 delegate: Rectangle {
                     required property var modelData
@@ -166,7 +176,7 @@ Item {
                 }
             }
         }
-        // Más avisos en cola: "+2" discreto (se ven de a uno, así sabés que hay más).
+        // More notifications queued: discreet "+2" (they show one at a time, so you know there are more).
         Text {
             enabled: false
             visible: root.notif !== null && Recorder.notice === "" && Notifs.queue.length > 1
@@ -174,12 +184,13 @@ Item {
             text: "+" + (Notifs.queue.length - 1)
             color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.features: { "tnum": 1 }
         }
-        // No molestar activo: luna chica (sabés por qué no llegan avisos).
+        // Do Not Disturb active: small moon (so you know why no alerts show up).
         Icon {
             visible: Notifs.dnd && !root.notif && Recorder.notice === "" && Laptop.notice === ""
             anchors.verticalCenter: parent.verticalCenter
             name: "moon"; size: 14; tone: "gray"
         }
+        // No internet: fixed red dot (swipe over the island for details).
         Rectangle {
             visible: SysStatus.known && !SysStatus.online
             anchors.verticalCenter: parent.verticalCenter
@@ -189,14 +200,14 @@ Item {
         WorkspaceDots { anchors.verticalCenter: parent.verticalCenter }
     }
 
-    // Vista previa de la captura: ancho 440 px (alto según la proporción, máx. 300 px).
-    // Se decodifica escalada (sourceSize) y se descarga al irse el aviso (source = "").
+    // Screenshot preview: 440 px wide (height follows the aspect ratio, max 300 px).
+    // Decoded scaled (sourceSize) and released when the notification goes away (source = "").
     Item {
         id: shot
         readonly property string src: Notifs.thumbOf(root.notif)
         readonly property bool ready: src !== "" && img.status === Image.Ready && img.implicitWidth > 0
         readonly property real aspect: ready ? img.implicitWidth / img.implicitHeight : 16 / 9
-        readonly property int side: 10                       // margen inferior y lateral
+        readonly property int side: 10                       // bottom and side margin
         readonly property real boxW: Math.round(Math.min(440, 300 * aspect))
         readonly property real boxH: Math.round(boxW / aspect)
         anchors.horizontalCenter: parent.horizontalCenter
@@ -207,13 +218,13 @@ Item {
         Behavior on opacity { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutCubic } }
         ClippingRectangle {
             anchors.fill: parent
-            radius: Theme.radiusCard - shot.side             // concéntrico con la isla
+            radius: Theme.radiusCard - shot.side             // concentric with the island
             color: Theme.field
             Image {
                 id: img
                 anchors.fill: parent
                 source: shot.src
-                sourceSize.width: 880                        // 2× para pantallas HiDPI, nunca la captura entera
+                sourceSize.width: 880                        // 2x for HiDPI screens, never the full screenshot
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true; cache: false; smooth: true; mipmap: false
             }
