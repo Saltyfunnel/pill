@@ -109,7 +109,7 @@ Item {
 
     Column {
         anchors.left: art.right; anchors.leftMargin: 16
-        anchors.right: controls.left; anchors.rightMargin: 16
+        anchors.right: eq.left; anchors.rightMargin: 12
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
         Text {
@@ -129,6 +129,29 @@ Item {
             Rectangle {
                 height: parent.height; radius: 1.5; color: Theme.fill
                 width: root.player && root.player.length > 0 ? parent.width * Math.min(1, root.player.position / root.player.length) : 0
+            }
+        }
+    }
+
+    // Equalizer (cava): only exists while music plays and the card is visible.
+    Binding { target: Cava; property: "active"; value: root.visible && root.player !== null && root.player.isPlaying }
+    Row {
+        id: eq
+        readonly property bool on: root.player !== null && root.player.isPlaying
+        anchors.right: controls.left; anchors.rightMargin: eq.on ? 12 : 0
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 2
+        width: eq.on ? implicitWidth : 0
+        visible: eq.on
+        Repeater {
+            model: Cava.count
+            delegate: Rectangle {
+                required property int index
+                width: 3; radius: 1.5
+                anchors.verticalCenter: parent.verticalCenter
+                color: Theme.fill
+                height: Math.max(3, 28 * (Cava.bars[index] || 0) / 100)
+                Behavior on height { NumberAnimation { duration: Theme.reduceMotion ? 0 : 60 } }
             }
         }
     }
