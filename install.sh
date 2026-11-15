@@ -289,7 +289,7 @@ TERMINAL=(kitty fish starship fastfetch btop)
 UTILITY=(grim slurp wl-clipboard brightnessctl pacman-contrib wf-recorder upower libnotify
          bluez bluez-utils blueman networkmanager udisks2 udiskie gvfs
          gtk3 libayatana-appindicator)
-FILES=(thunar thunar-volman thunar-archive-plugin tumbler ffmpegthumbnailer file-roller trash-cli)
+FILES=(thunar exo thunar-volman thunar-archive-plugin tumbler ffmpegthumbnailer file-roller trash-cli)
 MEDIA=(mpv imv imagemagick ffmpeg yt-dlp cava)
 SETTINGS=(dconf gsettings-desktop-schemas)
 APPS=(firefox spotify-launcher qbittorrent gnome-disk-utility zed)
@@ -360,6 +360,11 @@ deploy "$CONFIGS_SRC/starship"    "$CONFIG_DIR"             "Starship config"
 deploy "$CONFIGS_SRC/gtk-3.0"     "$CONFIG_DIR/gtk-3.0"     "GTK 3 config"
 deploy "$CONFIGS_SRC/gtk-4.0"     "$CONFIG_DIR/gtk-4.0"     "GTK 4 config"
 deploy "$CONFIGS_SRC/Thunar"      "$CONFIG_DIR/Thunar"      "Thunar config"
+# Thunar "Open Terminal Here" needs a default terminal set in the Xfce helpers
+as_user mkdir -p "$CONFIG_DIR/xfce4"
+if ! grep -qs '^TerminalEmulator=' "$CONFIG_DIR/xfce4/helpers.rc"; then
+    echo "TerminalEmulator=kitty" | as_user tee -a "$CONFIG_DIR/xfce4/helpers.rc" > /dev/null
+fi
 deploy "$SCRIPTS_SRC"             "$CONFIG_DIR/scripts"     "User scripts"
 as_user find "$CONFIG_DIR/scripts" -type f -exec chmod +x {} + 2>/dev/null || true
 # Quickshell runs its helper scripts directly, so they need the executable bit too (git stores them as 644)
