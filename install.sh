@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Saltyfunnels Shell installer — Arch Linux + Hyprland + Quickshell + matugen theming
+# Saltyfunnels Pill installer — Arch Linux + Hyprland + Quickshell + matugen theming
 # Login screen: SDDM (matugen-themed).  Lock screen: hyprlock.
 # Run from the repo folder:   sudo bash install.sh
 ################################################################################
