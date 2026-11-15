@@ -38,23 +38,43 @@ Singleton {
         const k = keyOf(n)
         return k !== "" && cls !== "" && (cls.includes(k) || k.includes(cls))
     }
+    // Icon-theme names (e.g. from udiskie) can arrive as image://icon/<name>.
+    // If the theme has no such icon, Qt draws the pink/black missing-texture square,
+    // so validate the name first and return "" when it does not resolve.
+    readonly property string iconScheme: "image://icon/"
+    function isThemeImage(img) { return typeof img === "string" && img.startsWith(iconScheme) }
+
     function iconOf(n) {
         if (!n) return ""
-        if (n.image) return n.image
+        if (n.image) {
+            if (!isThemeImage(n.image)) return n.image
+            const ip = Quickshell.iconPath(n.image.substring(iconScheme.length), true)
+            if (ip !== "") return ip
+        }
         const p = Quickshell.iconPath(n.appIcon || n.desktopEntry || "", true)
         if (p !== "") return p
         const e = n.desktopEntry ? DesktopEntries.byId(n.desktopEntry) : DesktopEntries.heuristicLookup(n.appName || "")
         return e ? Quickshell.iconPath(e.icon, true) : ""
     }
 
+    // Nerd Font glyph fallback for when no real icon resolves (USB sticks, drives).
+    // Returns "" if a real icon exists or nothing matches.
+    function glyphOf(n) {
+        if (!n || iconOf(n) !== "") return ""
+        const s = ((n.appIcon || "") + " " + (n.appName || "") + " " + (n.summary || "") + " " + (n.body || "")).toLowerCase()
+        // udiskie only reports removable media here, so all of these get the USB glyph.
+        if (/usb|removable|drive|disk|udisks|mount|device/.test(s)) return "\uf287"
+        return ""
+    }
+
     // Thumbnail (e.g. a screenshot): the notification image if it's a file/custom image
-    // (hint image-path or image-data), not an app icon.
+    // (hint image-path or image-data), not an app icon or an icon-theme name.
     function thumbOf(n) {
         if (!n) return ""
         const h = n.hints || {}
         const p = h["image-path"] || h["image_path"] || ""
         if (typeof p === "string" && (p.startsWith("file://") || p.startsWith("/"))) return p.startsWith("/") ? "file://" + p : p
-        return n.image && !n.appIcon && n.image !== "" ? n.image : ""
+        return n.image && !n.appIcon && n.image !== "" && !isThemeImage(n.image) ? n.image : ""
     }
 
     // Removes a specific notification from the queue. Never "blindly pop the first one": invoking an
