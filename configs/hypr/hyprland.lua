@@ -26,8 +26,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
     hl.exec_cmd("hyprpaper")
-    hl.exec_cmd("quickshell")
-    hl.exec_cmd("mako")
+    hl.exec_cmd("quickshell")    -- the island also acts as the notification daemon (no mako needed)
     hl.exec_cmd("udiskie")
     hl.exec_cmd("gsettings set org.gnome.desktop.interface icon-theme 'Colloid-Dynamic-Dark'")
     hl.exec_cmd("~/.config/scripts/setwall.sh --restore")       -- re-apply last wallpaper + colours
@@ -151,11 +150,18 @@ hl.window_rule({ match = { class = "updates" }, opacity = "0.80" })
 hl.window_rule({ match = { class = "updates" }, suppress_event = "maximize" })
 
 --------------------------------------------------------------------------------
--- layer rules (blur behind the see-through dashboard popup)
+-- layer rules (blur behind the see-through island)
 --------------------------------------------------------------------------------
 
 hl.layer_rule({
     match = { namespace = "^quickshell$" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.3,
+})
+
+hl.layer_rule({
+    match = { namespace = "^island$" },
     blur = true,
     blur_popups = true,
     ignore_alpha = 0.3,
