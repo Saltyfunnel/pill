@@ -287,7 +287,7 @@ LOGIN=(sddm hyprlock)
 AUDIO=(pipewire pipewire-pulse pipewire-alsa wireplumber playerctl pavucontrol)
 TERMINAL=(kitty fish starship fastfetch btop)
 UTILITY=(grim slurp wl-clipboard brightnessctl pacman-contrib wf-recorder upower libnotify
-         bluez bluez-utils blueman networkmanager udisks2 udiskie gvfs
+         bluez bluez-utils blueman networkmanager udisks2 udiskie gvfs xdg-utils
          gtk3 libayatana-appindicator)
 FILES=(thunar exo thunar-volman thunar-archive-plugin tumbler ffmpegthumbnailer file-roller trash-cli)
 MEDIA=(mpv imv imagemagick ffmpeg yt-dlp cava)
@@ -364,6 +364,14 @@ deploy "$CONFIGS_SRC/Thunar"      "$CONFIG_DIR/Thunar"      "Thunar config"
 as_user mkdir -p "$CONFIG_DIR/xfce4"
 if ! grep -qs '^TerminalEmulator=' "$CONFIG_DIR/xfce4/helpers.rc"; then
     echo "TerminalEmulator=kitty" | as_user tee -a "$CONFIG_DIR/xfce4/helpers.rc" > /dev/null
+fi
+# Thunar as the default folder handler: udiskie's "Browse directory" action goes
+# through xdg-open, which would otherwise pick a terminal file manager.
+# Runs as your user so it writes ~/.config/mimeapps.list (not root's).
+if as_user xdg-mime default thunar.desktop inode/directory; then
+    print_ok "Thunar set as the default file manager"
+else
+    print_warn "Could not set Thunar as default. Run later:  xdg-mime default thunar.desktop inode/directory"
 fi
 deploy "$SCRIPTS_SRC"             "$CONFIG_DIR/scripts"     "User scripts"
 as_user find "$CONFIG_DIR/scripts" -type f -exec chmod +x {} + 2>/dev/null || true
