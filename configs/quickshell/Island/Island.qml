@@ -207,8 +207,11 @@ PanelWindow {
 
 
     // Soft, diffuse shadow behind the card (does not clip, does not receive input).
+    // Only drawn when the card is solid: behind a translucent card the shadow source
+    // would show through and cancel the transparency.
     Rectangle {
         id: shadowSrc
+        visible: Theme.cardAlpha >= 1
         x: pill.x; y: pill.y; width: pill.width; height: pill.height
         radius: pill.radius
         color: Theme.card

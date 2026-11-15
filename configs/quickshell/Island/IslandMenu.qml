@@ -55,7 +55,7 @@ Item {
         Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
         Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
         width: parent.width - Theme.padPanel * 2
-        spacing: Theme.space6 - 2
+        spacing: Theme.space3
 
         Reveal {
             step: 0; width: parent.width; height: 48
@@ -104,7 +104,11 @@ Item {
                 onWallpaper: root.showWallpaper()
                 onLauncher: root.showLauncher()
                 onCapture: root.page = "shot" } }
-        Reveal { step: 4; width: parent.width; height: actions.implicitHeight
+        // System updates (hidden when everything is up to date).
+        Reveal { step: 4; width: parent.width; height: updates.implicitHeight
+            visible: updates.total > 0
+            UpdatesSection { id: updates; width: parent.width; onDone: root.done() } }
+        Reveal { step: 5; width: parent.width; height: actions.implicitHeight
             ActionsSection { id: actions; anchors.horizontalCenter: parent.horizontalCenter; onDone: root.done()
                 } }
     }

@@ -20,17 +20,15 @@ Item {
     implicitHeight: row.implicitHeight
     visible: ready
 
-    // Map wttr.in weather codes to an emoji.
+    // Map wttr.in weather codes to a Font Awesome glyph (Hack Nerd Font),
+    // so the icon can be tinted with the matugen accent.
     function iconFor(code) {
-        if (code === 113) return "☀️"
-        if (code === 116) return "⛅"
-        if (code === 119 || code === 122) return "☁️"
-        if ([143, 248, 260].indexOf(code) >= 0) return "🌫️"
-        if ([200, 386, 389, 392, 395].indexOf(code) >= 0) return "⛈️"
-        if ([179, 227, 230, 323, 326, 329, 332, 335, 338, 368, 371].indexOf(code) >= 0) return "❄️"
-        if ([182, 185, 281, 284, 311, 314, 317, 320, 350, 362, 365, 374, 377].indexOf(code) >= 0) return "🌨️"
-        if ([176, 263, 266, 293, 296, 299, 302, 305, 308, 353, 356, 359].indexOf(code) >= 0) return "🌧️"
-        return "🌡️"
+        if (code === 113) return "\uf185"                         // sun
+        if ([200, 386, 389, 392, 395].indexOf(code) >= 0) return "\uf0e7"   // bolt
+        if ([179, 227, 230, 323, 326, 329, 332, 335, 338, 368, 371,
+             182, 185, 281, 284, 311, 314, 317, 320, 350, 362, 365, 374, 377].indexOf(code) >= 0) return "\uf2dc"   // snow / sleet
+        if ([176, 263, 266, 293, 296, 299, 302, 305, 308, 353, 356, 359].indexOf(code) >= 0) return "\uf043"       // rain drop
+        return "\uf0c2"                                           // cloud (cloudy, fog, default)
     }
 
     function parse(raw) {
@@ -68,7 +66,9 @@ Item {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: root.icon
-            font.pixelSize: 26
+            color: Theme.fill
+            font.family: Theme.font
+            font.pixelSize: 24
         }
         Column {
             anchors.verticalCenter: parent.verticalCenter

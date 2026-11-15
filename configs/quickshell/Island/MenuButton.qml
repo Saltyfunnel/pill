@@ -1,7 +1,7 @@
 import QtQuick
 import "../Common"
 
-// Light gray circular button with line icon and gray label underneath.
+// Circular button with line icon and label underneath.
 // Borderless: the circle is distinguished by icon, label, and hover. Keyboard focus is
 // shown with a ring only while focused (Tab), never as a permanent border.
 // `armed` can come from outside (ActionsSection state machine) and is respected;
@@ -15,7 +15,7 @@ Item {
     property bool armed: false         // armed from outside (binding)
     property bool selfArmed: false     // internal arming (confirm: true)
     readonly property bool isArmed: armed || selfArmed
-    property bool active: false        // "on" state: black with white icon
+    property bool active: false        // "on" state: accent fill with contrasting icon
     property string letter: ""         // custom access: initial instead of icon
     signal activated()
     property real lastFire: 0
@@ -32,7 +32,7 @@ Item {
         id: circle
         anchors.horizontalCenter: parent.horizontalCenter
         width: Theme.menuBtnCircle; height: Theme.menuBtnCircle; radius: Theme.menuBtnCircle / 2
-        color: (btn.isArmed || btn.active) ? Theme.fill : (mouse.containsMouse ? Theme.hover : Theme.surface)
+        color: (btn.isArmed || btn.active) ? Theme.fill : (mouse.containsMouse ? Theme.hover : "transparent")
         scale: (mouse.pressed && mouse.containsMouse) || btn.keyDown ? 0.92 : 1
         Rectangle {       // keyboard focus ring (only when focused)
             anchors.fill: parent; anchors.margins: -4; radius: width / 2
@@ -47,12 +47,13 @@ Item {
         Behavior on color { ColorAnimation { duration: Theme.durFast } }
         Behavior on scale { NumberAnimation { duration: Theme.durMicro; easing.type: Easing.OutQuad } }
         // Optical centering: line icons often look 1 px high.
-        Icon { anchors.centerIn: parent; anchors.verticalCenterOffset: 1; name: btn.icon; visible: btn.letter === ""; size: Theme.iconMd; tone: (btn.isArmed || btn.active) ? "white" : "dark" }
+        // Idle icons use the matugen accent colour; on an accent fill they switch to onAccent.
+        Icon { anchors.centerIn: parent; anchors.verticalCenterOffset: 1; name: btn.icon; visible: btn.letter === ""; size: Theme.iconMd; tone: (btn.isArmed || btn.active) ? "white" : "accent" }
         Text {
             anchors.centerIn: parent
             visible: btn.letter !== ""
             text: btn.letter
-            color: (btn.isArmed || btn.active) ? Theme.onAccent : Theme.textPrimary
+            color: (btn.isArmed || btn.active) ? Theme.onAccent : Theme.fill
             font.family: Theme.font; font.pixelSize: Theme.fontHeading; font.weight: Font.Medium
         }
     }
