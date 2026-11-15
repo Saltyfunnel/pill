@@ -45,10 +45,8 @@ except Exception:
         grim -g "$g" "$f" || fail "grim could not capture the window"
         ;;
     delay)
-        for i in 3 2 1; do
-            command -v notify-send >/dev/null 2>&1 && notify-send -u critical -t 950 "Screenshot in $i..."
-            sleep 1
-        done
+        # Silent countdown: a notification would take over the island and end up in the shot.
+        sleep 3
         grim "$f" || fail "grim could not capture the screen"
         ;;
     screen)
