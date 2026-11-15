@@ -18,3 +18,4 @@ singleton Notes 1.0 Notes.qml
 singleton Launch 1.0 Launch.qml
 singleton I18n 1.0 I18n.qml
 singleton Laptop 1.0 Laptop.qml
+singleton Cava 1.0 Cava.qml
