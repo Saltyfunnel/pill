@@ -1,0 +1,173 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Matugen template: Material You colours are injected into the palette below.
+palette = "matugen"
+add_newline = true
+
+format = """
+[](fg:c1)\
+$os\
+$username\
+[](bg:c2 fg:c1)\
+$directory\
+[](fg:c2 bg:c3)\
+$git_branch\
+$git_status\
+[](fg:c3 bg:c4)\
+$c\
+$elixir\
+$elm\
+$golang\
+$gradle\
+$haskell\
+$java\
+$julia\
+$maven\
+$nodejs\
+$bun\
+$nim\
+$rust\
+$scala\
+[](fg:c4 bg:c5)\
+$docker_context\
+[](fg:c5 bg:c6)\
+$time\
+[](fg:c6)\
+$line_break$character"""
+
+[palettes.matugen]
+c1 = "{{colors.primary.default.hex}}"
+t1 = "{{colors.on_primary.default.hex}}"
+c2 = "{{colors.secondary.default.hex}}"
+t2 = "{{colors.on_secondary.default.hex}}"
+c3 = "{{colors.tertiary.default.hex}}"
+t3 = "{{colors.on_tertiary.default.hex}}"
+c4 = "{{colors.primary_container.default.hex}}"
+t4 = "{{colors.on_primary_container.default.hex}}"
+c5 = "{{colors.secondary_container.default.hex}}"
+t5 = "{{colors.on_secondary_container.default.hex}}"
+c6 = "{{colors.surface_container_high.default.hex}}"
+t6 = "{{colors.on_surface.default.hex}}"
+
+[character]
+success_symbol = "[❯](fg:c1)"
+error_symbol = "[❯](fg:#ff5555)"
+
+[os]
+disabled = false
+style = "bg:c1 fg:t1"
+format = '[ $symbol ]($style)'
+
+[os.symbols]
+Arch = ""
+
+[username]
+show_always = true
+style_user = "bg:c1 fg:t1"
+style_root = "bg:c1 fg:t1"
+format = '[$user ]($style)'
+
+[directory]
+style = "bg:c2 fg:t2"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = " "
+"Pictures" = " "
+
+[git_branch]
+symbol = ""
+style = "bg:c3 fg:t3"
+format = '[ $symbol $branch ]($style)'
+
+[git_status]
+style = "bg:c3 fg:t3"
+format = '[$all_status$ahead_behind ]($style)'
+
+[c]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[cpp]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[elixir]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[elm]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[golang]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[gradle]
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[haskell]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[java]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[julia]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[maven]
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[nodejs]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[bun]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[nim]
+symbol = "󰄥 "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[rust]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[scala]
+symbol = " "
+style = "bg:c4 fg:t4"
+format = '[ $symbol ($version) ]($style)'
+
+[docker_context]
+symbol = " "
+style = "bg:c5 fg:t5"
+format = '[ $symbol $context ]($style)'
+
+[time]
+disabled = false
+time_format = "%R"
+style = "bg:c6 fg:t6"
+format = '[ ♥ $time ]($style)'
