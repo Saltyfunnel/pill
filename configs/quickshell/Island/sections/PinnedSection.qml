@@ -9,7 +9,6 @@ import ".."
 Column {
     id: root
     signal done()
-    signal desktops()
     signal clipboard()
     signal notes()
     signal emoji()
@@ -26,7 +25,6 @@ Column {
         // Record: closes island and starts after 0.4s (so it's not recorded open).
         else if (id === "record") { if (Recorder.recording) Recorder.stop(); else Recorder.start(400); root.done() }
         else if (id === "capture") root.capture()
-        else if (id === "desktops") root.desktops()
         else if (id === "clipboard") root.clipboard()
         else if (id === "notes") root.notes()
         else if (id === "emoji") root.emoji()

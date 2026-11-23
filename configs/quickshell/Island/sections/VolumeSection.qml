@@ -10,6 +10,7 @@ MSlider {
     PwObjectTracker { objects: root.sink ? [root.sink] : [] }
 
     visible: ready
+    slim: true
     icon: ready && sink.audio.muted ? "mute" : "volume"
     from: 0; to: 1
     value: ready ? (sink.audio.muted ? 0 : sink.audio.volume) : 0

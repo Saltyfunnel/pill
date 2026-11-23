@@ -21,7 +21,7 @@ Column {
 
     Rectangle {
         id: box
-        width: Math.round(parent.width); height: Theme.controlH + 8
+        width: Math.round(parent.width); height: Theme.controlH + 2
         radius: height / 2                   // pill
         // Spotlight style: fine semi-transparent thread; with focus, raised surface,
         // sharper border and a soft ring around it (without blur or panel transparency).

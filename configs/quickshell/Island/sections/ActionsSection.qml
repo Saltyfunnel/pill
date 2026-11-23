@@ -5,7 +5,7 @@ import "../../Common"
 import "../../Common/confirm.js" as Confirm
 import ".."
 
-// Power and Settings. Logout / Reboot / Power off require confirmation with a SINGLE
+// Lock, Log out, Reboot and Shut down. Logout / Reboot / Power off require confirmation with a SINGLE
 // state machine (Common/confirm.js): only one can be armed; the second click
 // executes once and subsequent clicks are ignored for 2s.
 Row {
@@ -29,6 +29,8 @@ Row {
     function reset() { disarm.stop(); st = Confirm.disarm(st) }
     Timer { id: disarm; interval: 3000; onTriggered: root.st = Confirm.disarm(root.st) }
 
+    // Lock needs no confirmation: it is instantly undone by unlocking.
+    MenuButton { icon: "lock"; label: I18n.tr("Lock"); onActivated: { Quickshell.execDetached(["hyprlock"]); root.done() } }
     MenuButton { icon: "logout"; label: I18n.tr("Log out"); armed: root.armed === "logout"; onActivated: root.press("logout") }
     MenuButton { icon: "restart"; label: I18n.tr("Reboot"); armed: root.armed === "reboot"; onActivated: root.press("reboot") }
     MenuButton { icon: "power"; label: I18n.tr("Shut down"); armed: root.armed === "poweroff"; onActivated: root.press("poweroff") }

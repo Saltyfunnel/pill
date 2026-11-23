@@ -4,16 +4,15 @@ import "../../Common"
 import ".."
 
 // Screenshot page: pick what to capture. The island closes first so it never ends up in the picture.
+// The capture itself (and the "In 3 s" countdown shown in the pill) is handled by Recorder.
 Item {
     id: root
     signal back()
     signal done()
     implicitHeight: col.implicitHeight
 
-    readonly property string script: Qt.resolvedUrl("../../scripts/screenshot.sh").toString().replace("file://", "")
-
     function shoot(mode, wait) {
-        Quickshell.execDetached(["sh", "-c", 'sleep "$2"; exec "$0" "$1"', root.script, mode, String(wait)])
+        Recorder.screenshot(mode, wait)
         root.done()
     }
 
