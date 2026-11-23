@@ -170,4 +170,4 @@ format = '[ $symbol $context ]($style)'
 disabled = false
 time_format = "%R"
 style = "bg:c6 fg:t6"
-format = '[ ♥ $time ]($style)'
+format = '[  $time ]($style)'
