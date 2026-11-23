@@ -12,7 +12,10 @@ new="${new,,}"
 sample=$(find "$ICON_DIR/places" -type f -name 'folder.svg' | head -n1)
 old=""
 if [[ -n "$sample" ]]; then
-    old=$(grep -oiE '#[0-9a-f]{6}' "$sample" | tr 'A-F' 'a-f' | sort | uniq -c | sort -rn | head -n1 | awk '{print $2}')
+    # ignore the neutral colours Colloid uses for shading; what is left is the folder colour
+    old=$(grep -oiE '#[0-9a-f]{6}' "$sample" | tr 'A-F' 'a-f' \
+        | grep -vxE '#(ffffff|000000|333333|363636|dedede)' \
+        | sort | uniq -c | sort -rn | head -n1 | awk '{print $2}')
 fi
 [[ -n "$old" ]] || old=$(cat "$STATE" 2>/dev/null || echo "#60c0f0")
 
