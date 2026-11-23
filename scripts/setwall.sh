@@ -36,7 +36,7 @@ hyprctl hyprpaper wallpaper ",$wall" >/dev/null 2>&1 \
 # 2. Recolour everything from it
 #    Grey wallpapers get a monochrome scheme (matugen would otherwise fall back to its default blue seed).
 #    Colourful ones get a scheme that spreads hues across primary/secondary/tertiary.
-sat=$(magick "$wall" -resize 64x64 -colorspace HSL -channel G -separate +channel \
+sat=$(magick "$wall" -resize 64x64 -colorspace HSB -channel G -separate +channel \
       -format '%[fx:mean]' info: 2>/dev/null) || sat=1
 
 if awk "BEGIN { exit !($sat < 0.08) }"; then
