@@ -46,9 +46,11 @@ else
 fi
 echo "saturation=$sat scheme=$scheme"
 
-matugen image "$wall" -m dark -t "$scheme" --prefer saturation
+matugen image "$wall" -m dark -t "$scheme" --prefer saturation \
+    || echo "warning: matugen exited with an error (see above), continuing" >&2
 # 3. Recolour the folder icons to match
-"$HOME/.config/scripts/recolor-icons.sh" "$(cat "$HOME/.cache/accent_color")"
+"$HOME/.config/scripts/recolor-icons.sh" "$(cat "$HOME/.cache/accent_color")" \
+    || echo "warning: recolor-icons failed" >&2
 
 # Sync colors to global cache for SDDM access
 if [ -f "$HOME/.cache/wal/colors.json" ]; then
