@@ -28,9 +28,10 @@ Colloid icons, and themed Thunar, GTK and kitty.
 On a fresh Arch install, from your normal user account:
 
 ```
-git clone <this repo>
-cd <this repo>
-sudo bash install.sh
+git clone https://github.com/Saltyfunnel/pill
+cd pill
+chmod +x *.sh
+sudo ./install.sh
 ```
 
 The installer configures pacman, installs GPU drivers and packages, installs
