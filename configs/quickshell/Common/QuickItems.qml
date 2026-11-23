@@ -7,7 +7,7 @@ import "pinorder.js" as PinOrder
 // State (what is pinned, in what order, and custom shortcuts) lives in DisplayState.
 Singleton {
     id: root
-    readonly property int columns: 5
+    readonly property int columns: 4
     readonly property int maxRows: 3
     readonly property int maxButtons: columns * maxRows
 
@@ -16,7 +16,6 @@ Singleton {
         { id: "terminal", label: "Terminal", icon: "terminal", slider: false },
         { id: "record", label: I18n.tr("Record screen"), icon: "record", slider: false },
         { id: "capture", label: I18n.tr("Screenshot"), icon: "capture", slider: false },
-        { id: "desktops", label: I18n.tr("Desktops"), icon: "desktops", slider: false },
         { id: "clipboard", label: I18n.tr("Clipboard"), icon: "clipboard", slider: false },
         { id: "notes", label: I18n.tr("Notes"), icon: "note", slider: false },
         { id: "emoji", label: I18n.tr("Emojis"), icon: "emoji", slider: false },
@@ -34,7 +33,8 @@ Singleton {
     // Order of all elements (catalog + custom); defines the order in the island.
     readonly property var allIds: builtins.map(b => b.id).concat(DisplayState.customItems.map(c => c.id))
     readonly property var order: PinOrder.full(DisplayState.pinOrder, DisplayState.pins, allIds)
-    readonly property var orderedPins: PinOrder.sortPins(DisplayState.pins, order)
+    // Pins of items that no longer exist (deleted custom shortcuts, removed built-ins) are ignored.
+    readonly property var orderedPins: PinOrder.sortPins(DisplayState.pins, order).filter(p => exists(p))
     readonly property var pinnedSliders: orderedPins.filter(p => isSlider(p))
     readonly property var pinnedButtons: orderedPins.filter(p => !isSlider(p)).slice(0, maxButtons)
     function item(id) { return builtins.find(b => b.id === id) ?? custom(id) }

@@ -21,6 +21,25 @@ Singleton {
 
     function toggle() { if (recording || starting) stop(); else start() }
 
+    // Screenshots: the countdown is shown in the compact pill (3, 2, 1), then the pill is
+    // given a moment to settle back to normal before grim fires.
+    property int countdown: 0                // seconds left for the "In 3 s" screenshot
+    property string shotMode: ""
+    readonly property string shotScript: Qt.resolvedUrl("../scripts/screenshot.sh").toString().replace("file://", "")
+    function screenshot(mode, wait) {
+        if (countdown > 0) return
+        if (mode === "delay") { shotMode = "screen"; countdown = 3; countTimer.restart() }
+        else { shotMode = mode; shotTimer.interval = Math.round((wait || 0.3) * 1000); shotTimer.restart() }
+    }
+    Timer {
+        id: countTimer; interval: 1000; repeat: true
+        onTriggered: {
+            root.countdown--
+            if (root.countdown <= 0) { countTimer.stop(); shotTimer.interval = 350; shotTimer.restart() }
+        }
+    }
+    Timer { id: shotTimer; onTriggered: Quickshell.execDetached(["sh", root.shotScript, root.shotMode]) }
+
     // Starts after `delay` ms (so the island closes before recording).
     function start(delay) {
         if (recording || starting) return

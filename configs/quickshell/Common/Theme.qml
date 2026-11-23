@@ -48,7 +48,7 @@ Singleton {
 
     // Surfaces
     // Island transparency: 1 = solid, lower = more see-through (0.85 is subtle, 0.7 is clearly glassy).
-    readonly property real cardAlpha: 0.85
+    readonly property real cardAlpha: 0.72
     readonly property color cardSolid: cCard
     readonly property color card: Qt.rgba(cCard.r, cCard.g, cCard.b, cardAlpha)   // island, panels
     readonly property color field: mix(cCard, cText, 0.07)              // fields and rows
@@ -112,8 +112,8 @@ Singleton {
 
     // Equivalent controls
     readonly property int controlH: 32
-    // Menu buttons: 5 cells of 72px fill the 360px content width of the island exactly.
-    readonly property int menuBtnSize: 72
+    // Menu buttons: 4 cells of 90px fill the 360px content width of the island exactly.
+    readonly property int menuBtnSize: 90
     readonly property int menuBtnCircle: 44
 
     // Centralized animations
