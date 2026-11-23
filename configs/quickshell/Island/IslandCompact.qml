@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Widgets
 import Quickshell
+import Quickshell.Services.Mpris
 import "../Common"
 
 // Compact state: clock (HH:mm) plus status items.
@@ -18,11 +19,23 @@ Item {
     readonly property bool notifQuiet: notif !== null && Notifs.fromFocused(notif)
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
+    // Music playing: small equalizer next to the clock (only while the pill is visible).
+    readonly property var players: Mpris.players.values
+    readonly property bool playing: {
+        for (const p of players)
+            if (p.isPlaying && (p.dbusName || "").indexOf("playerctld") < 0) return true
+        return false
+    }
+    readonly property bool showEq: playing && !notif && Recorder.notice === "" && Laptop.notice === "" && !Recorder.recording
+    // `when` so this does not fight with the media card's own binding.
+    Binding { target: Cava; property: "active"; value: true; when: root.active && root.playing }
+
     Row {
         id: row
         anchors.horizontalCenter: parent.horizontalCenter
         y: (Theme.compactH - height) / 2
         spacing: 10
+        GlanceEq { anchors.verticalCenter: parent.verticalCenter; on: root.showEq }
         Text {
             visible: !root.notif
             enabled: false              // decorative text: no interaction or selection

@@ -31,11 +31,6 @@ Item {
         }
     }
 
-    // Character mood based on state: no internet → worried; CPU >85% or
-    // high temperature (≥85 °C CPU / ≥85 °C GPU) → tired; otherwise, happy.
-    readonly property string mood: SysStatus.known && !SysStatus.online ? "worried"
-        : (r && (r.cpu > 85 || (r.temp !== null && r.temp !== undefined && r.temp >= 85)))
-          || (SysStatus.gpu && SysStatus.gpu.temp >= 85) ? "tired" : ""
     Component.onDestruction: if (open) SysStatus.release()
 
     // Free memory (Android style): first click arms (persistent black, like Power Off),
