@@ -5,7 +5,6 @@ MSlider 1.0 MSlider.qml
 Icon 1.0 Icon.qml
 singleton Workspaces 1.0 Workspaces.qml
 singleton Apps 1.0 Apps.qml
-singleton Media 1.0 Media.qml
 singleton Recorder 1.0 Recorder.qml
 MSwitch 1.0 MSwitch.qml
 singleton IslandBus 1.0 IslandBus.qml
