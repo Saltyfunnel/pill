@@ -3,6 +3,8 @@
 A minimal Arch Linux + Hyprland desktop built around a single Quickshell "Pill".
 All colours are generated from your wallpaper with matugen.
 
+![Pill](1.png)
+
 ## The island
 
 A small clock pill at the top of the screen. Click it (or drag it down) and it
