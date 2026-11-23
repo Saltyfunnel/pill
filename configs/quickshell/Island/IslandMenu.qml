@@ -9,8 +9,8 @@ Item {
     signal done()
     property bool open: false
     readonly property bool searchFocused: search.hasFocus
-    property string page: "menu"   // "menu" | "desks" | "clip" | "cal" | "notes" | "emoji" | "wall" | "launch" | "shot"
-    implicitHeight: (page === "desks" ? desks.implicitHeight : page === "clip" ? clip.implicitHeight : page === "cal" ? cal.implicitHeight : page === "notes" ? notes.implicitHeight : page === "emoji" ? emoji.implicitHeight : page === "wall" ? wall.implicitHeight : page === "launch" ? launch.implicitHeight : page === "shot" ? shot.implicitHeight : col.implicitHeight) + Theme.padPanel * 2
+    property string page: "menu"   // "menu" | "power" | "clip" | "cal" | "notes" | "emoji" | "wall" | "launch" | "shot"
+    implicitHeight: (page === "power" ? power.implicitHeight : page === "clip" ? clip.implicitHeight : page === "cal" ? cal.implicitHeight : page === "notes" ? notes.implicitHeight : page === "emoji" ? emoji.implicitHeight : page === "wall" ? wall.implicitHeight : page === "launch" ? launch.implicitHeight : page === "shot" ? shot.implicitHeight : col.implicitHeight) + Theme.padPanel * 2
 
     // Keys for the wallpaper page are forwarded from the pill (see Island.qml).
     property alias wallView: wall
@@ -27,13 +27,13 @@ Item {
     property int stage: 0
     Timer {
         id: stagger; interval: Theme.durStagger || 1; repeat: true
-        running: root.open && root.stage < 6 && Theme.durStagger > 0
+        running: root.open && root.stage < 5 && Theme.durStagger > 0
         onTriggered: root.stage++
     }
     // With reduceMotion, show everything at once (no staggering).
     onOpenChanged: {
-        if (open && Theme.durStagger === 0) stage = 6
-        if (!open) { stage = 0; page = "menu"; actions.reset(); notes.reset(); emoji.reset(); wall.reset(); launch.reset() }
+        if (open && Theme.durStagger === 0) stage = 5
+        if (!open) { stage = 0; page = "menu"; power.reset(); notes.reset(); emoji.reset(); wall.reset(); launch.reset() }
     }
 
     SystemClock { id: clock; precision: SystemClock.Minutes }
@@ -88,8 +88,22 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
+        // Search bar with the power button at its right end (same height and style).
         Reveal { step: 1; width: parent.width; height: search.implicitHeight
-            SearchSection { id: search; width: parent.width; onLaunched: root.done() } }
+            SearchSection { id: search; width: parent.width - powerBtn.width - Theme.space3; onLaunched: root.done() }
+            Rectangle {
+                id: powerBtn
+                anchors.top: parent.top
+                anchors.right: parent.right
+                width: Theme.controlH + 2; height: width; radius: width / 2
+                color: pm.containsMouse ? Theme.hover : Theme.field
+                border.width: 1
+                border.color: Qt.rgba(Theme.textPrimary.r, Theme.textPrimary.g, Theme.textPrimary.b, 0.20)
+                Behavior on color { ColorAnimation { duration: Theme.durMicro } }
+                Icon { anchors.centerIn: parent; name: "power"; size: Theme.iconSm; tone: "accent" }
+                MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.page = "power" }
+            }
+        }
         Reveal { step: 2; width: parent.width; height: media.implicitHeight; visible: media.player !== null
             MediaSection { id: media; width: parent.width } }
         // Visibility is determined by data, NOT by `pinned.visible`: a child's `visible`
@@ -97,7 +111,7 @@ Item {
         Reveal { step: 3; width: parent.width; height: pinned.implicitHeight
             visible: QuickItems.pinnedSliders.length + QuickItems.pinnedButtons.length > 0
             PinnedSection { id: pinned; width: parent.width
-                onDone: root.done(); onDesktops: { desks.refresh(); root.page = "desks" }
+                onDone: root.done()
                 onClipboard: root.showClipboard()
                 onNotes: root.page = "notes"
                 onEmoji: { emoji.reset(); root.page = "emoji" }
@@ -108,23 +122,20 @@ Item {
         Reveal { step: 4; width: parent.width; height: updates.implicitHeight
             visible: updates.total > 0
             UpdatesSection { id: updates; width: parent.width; onDone: root.done() } }
-        Reveal { step: 5; width: parent.width; height: actions.implicitHeight
-            ActionsSection { id: actions; anchors.horizontalCenter: parent.horizontalCenter; onDone: root.done()
-                } }
     }
 
-    WorkspacesView {
-        id: desks
-        x: root.page === "desks" ? 20 : root.width * 0.3
+    PowerView {
+        id: power
+        x: root.page === "power" ? 20 : root.width * 0.3
         y: Theme.padPanel
         width: root.width - 40
-        opacity: root.page === "desks" ? 1 : 0
+        opacity: root.page === "power" ? 1 : 0
         visible: opacity > 0
-        enabled: root.page === "desks"
+        enabled: root.page === "power"
         Behavior on x { NumberAnimation { duration: Theme.durNormal; easing.type: Easing.OutQuint } }
         Behavior on opacity { NumberAnimation { duration: Theme.durFast + 60 } }
         onBack: root.page = "menu"
-        onPicked: root.done()
+        onDone: root.done()
     }
 
     ClipboardView {

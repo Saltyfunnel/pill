@@ -96,6 +96,10 @@ PanelWindow {
             if (Recorder.notice !== "") { win.shown = true; hideTimer.stop() }
             else if (!win.hovered && !win.open) hideTimer.restart()
         }
+        function onCountdownChanged() {
+            if (Recorder.countdown > 0) { win.shown = true; hideTimer.stop() }
+            else if (!win.hovered && !win.open) hideTimer.restart()
+        }
     }
 
     // Battery, volume, and brightness notices: hidden island appears while they last.
@@ -180,7 +184,8 @@ PanelWindow {
         onReleased: m => {
             // With a notification: click = open app, right click = dismiss.
             if (!dragging && !pulling && !win.open && Notifs.current !== null) {
-                if (m.button === Qt.RightButton) Notifs.dismiss(); else Notifs.activate()
+                // Screenshot preview: any click dismisses it (no accidental opening of the image viewer).
+                if (m.button === Qt.RightButton || compact.hasShot) Notifs.dismiss(); else Notifs.activate()
                 dragging = false; dragDx = 0; return
             }
             if (m.button === Qt.RightButton) return
@@ -245,6 +250,9 @@ PanelWindow {
         radius: Math.min(height / 2, Theme.radiusCard)
         color: Theme.card
         Behavior on color { ColorAnimation { duration: Theme.durColor } }
+        // Hairline accent border: defines the edge against dark wallpapers.
+        border.width: 1
+        border.color: Qt.rgba(Theme.fill.r, Theme.fill.g, Theme.fill.b, 0.18)
         clip: true
 
         // Elastic bounce only on open/close. With island already open (page change: calendar,
