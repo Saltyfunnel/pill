@@ -134,7 +134,7 @@ Item {
     }
 
     // Equalizer (cava): only exists while music plays and the card is visible.
-    Binding { target: Cava; property: "active"; value: root.visible && root.player !== null && root.player.isPlaying }
+    Binding { target: Cava; property: "active"; value: true; when: root.visible && root.player !== null && root.player.isPlaying }
     Row {
         id: eq
         readonly property bool on: root.player !== null && root.player.isPlaying
