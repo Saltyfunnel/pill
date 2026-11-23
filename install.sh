@@ -82,7 +82,7 @@ print_phase() {
     local bar="${BCYN}$(repeat "$G_FULL" "$full")${RST}${BBLK}$(repeat "$G_EMPTY" $(( width - full )))${RST}"
     if (( IS_TTY )); then clear; fi
     echo ""
-    echo -e "    ${BLD}${BCYN}Saltyfunnels Shell${RST}  ${BBLK}installer${RST}"
+    echo -e "    ${BLD}${BCYN}Saltyfunnels Pill${RST}  ${BBLK}installer${RST}"
     echo ""
     hr
     echo -e "    ${bar}  ${BBLK}$(printf '%3d%%' "$pct")  step ${STEP}/${TOTAL_STEPS}${RST}"
