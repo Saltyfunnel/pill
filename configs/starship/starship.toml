@@ -36,18 +36,18 @@ $time\
 $line_break$character"""
 
 [palettes.matugen]
-c1 = "{{colors.primary.default.hex}}"
-t1 = "{{colors.on_primary.default.hex}}"
-c2 = "{{colors.secondary.default.hex}}"
-t2 = "{{colors.on_secondary.default.hex}}"
-c3 = "{{colors.tertiary.default.hex}}"
-t3 = "{{colors.on_tertiary.default.hex}}"
-c4 = "{{colors.primary_container.default.hex}}"
-t4 = "{{colors.on_primary_container.default.hex}}"
-c5 = "{{colors.secondary_container.default.hex}}"
-t5 = "{{colors.on_secondary_container.default.hex}}"
-c6 = "{{colors.surface_container_high.default.hex}}"
-t6 = "{{colors.on_surface.default.hex}}"
+c1 = "#ffb1c4"
+t1 = "#65002e"
+c2 = "#ffb1c4"
+t2 = "#65002e"
+c3 = "#ffb59f"
+t3 = "#5f1600"
+c4 = "#dc0b6c"
+t4 = "#ffffff"
+c5 = "#861a44"
+t5 = "#ffd6de"
+c6 = "#372529"
+t6 = "#f9dbe0"
 
 [character]
 success_symbol = "[❯](fg:c1)"
@@ -170,4 +170,4 @@ format = '[ $symbol $context ]($style)'
 disabled = false
 time_format = "%R"
 style = "bg:c6 fg:t6"
-format = '[ ♥ $time ]($style)'
+format = '[  $time ]($style)'
