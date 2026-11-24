@@ -14,7 +14,9 @@ Item {
     id: root
     signal done()
     readonly property int maxRows: 8
-    readonly property int rowH: 46
+    readonly property int rowH: 42
+    // Same hairline as the search bar and the card border.
+    readonly property color hairline: Qt.rgba(Theme.textPrimary.r, Theme.textPrimary.g, Theme.textPrimary.b, 0.20)
     implicitHeight: col.implicitHeight
 
     property string query: ""
@@ -66,15 +68,16 @@ Item {
     Column {
         id: col
         width: parent.width
-        spacing: 10
+        spacing: 8
 
-        // Search box (shows what you type).
+        // Search box (shows what you type): same slim style as the island search bar.
         Rectangle {
-            width: parent.width; height: 44; radius: 22
+            width: parent.width; height: 34; radius: 17
             color: Theme.field
-            Icon { x: 16; anchors.verticalCenter: parent.verticalCenter; name: "search"; size: 18; tone: "gray" }
+            border.width: 1; border.color: root.hairline
+            Icon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: "search"; size: 16; tone: "gray" }
             Text {
-                x: 46; width: parent.width - 62; anchors.verticalCenter: parent.verticalCenter
+                x: 38; width: parent.width - 52; anchors.verticalCenter: parent.verticalCenter
                 elide: Text.ElideLeft; textFormat: Text.PlainText
                 text: root.query !== "" ? root.query : "Search apps"
                 color: root.query !== "" ? Theme.textPrimary : Theme.textSecondary
@@ -135,17 +138,20 @@ Item {
                     Rectangle {
                         id: body
                         y: row.headH
-                        width: parent.width; height: root.rowH; radius: 16
+                        width: parent.width; height: root.rowH; radius: 14
                         color: row.index === root.selected ? Theme.hover : "transparent"
+                        // Selected row gets the same hairline as the other controls.
+                        border.width: row.index === root.selected ? 1 : 0
+                        border.color: root.hairline
                         opacity: row.isHiddenApp ? 0.45 : 1
                         Behavior on color { ColorAnimation { duration: Theme.durMicro } }
                         Image {
                             x: 12; anchors.verticalCenter: parent.verticalCenter
-                            width: 28; height: 28; sourceSize: Qt.size(56, 56)
+                            width: 26; height: 26; sourceSize: Qt.size(52, 52)
                             source: Apps.iconFor(row.modelData.e); smooth: true; asynchronous: true
                         }
                         Column {
-                            x: 52; width: parent.width - 52 - (row.isHiddenApp ? 48 : 20)
+                            x: 50; width: parent.width - 50 - (row.isHiddenApp ? 48 : 16)
                             anchors.verticalCenter: parent.verticalCenter
                             Text {
                                 width: parent.width; elide: Text.ElideRight; textFormat: Text.PlainText
@@ -162,7 +168,7 @@ Item {
                         // Marker for apps that are currently hidden.
                         Icon {
                             visible: row.isHiddenApp
-                            anchors.right: parent.right; anchors.rightMargin: 16
+                            anchors.right: parent.right; anchors.rightMargin: 14
                             anchors.verticalCenter: parent.verticalCenter
                             name: "eye-off"; size: 18; tone: "gray"
                         }

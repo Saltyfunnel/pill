@@ -24,6 +24,8 @@ Item {
     readonly property string setwall: home + "/.config/scripts/setwall.sh"
     readonly property int thumbW: 132
     readonly property int thumbH: 80
+    // Same hairline as the search bar and the card border.
+    readonly property color hairline: Qt.rgba(Theme.textPrimary.r, Theme.textPrimary.g, Theme.textPrimary.b, 0.20)
 
     property var all: []                 // [{ path, name }]
     property string query: ""
@@ -108,14 +110,23 @@ Item {
             Behavior on opacity { NumberAnimation { duration: Theme.durFast } } }
     }
 
+    // Borderless like the grid buttons: accent icon, circle only on hover.
     component RoundButton: Rectangle {
         id: rb
         property string icon
         signal clicked()
         width: 32; height: 32; radius: 16
-        color: rbm.containsMouse ? Theme.hover : Theme.surface
-        Icon { anchors.centerIn: parent; name: rb.icon; size: 18 }
+        color: rbm.containsMouse ? Theme.hover : "transparent"
+        Behavior on color { ColorAnimation { duration: Theme.durMicro } }
+        Icon { anchors.centerIn: parent; name: rb.icon; size: 18; tone: "accent" }
         MouseArea { id: rbm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: rb.clicked() }
+    }
+
+    // Small glass chip over the preview (file name, counter).
+    component Chip: Rectangle {
+        height: 26; radius: 13
+        color: Theme.scrim
+        border.width: 1; border.color: root.hairline
     }
 
     Column {
@@ -125,8 +136,8 @@ Item {
 
         // Header: back, title, search box (shows what you type).
         Item {
-            width: parent.width; height: 32
-            RoundButton { icon: "back"; onClicked: root.back() }
+            width: parent.width; height: 34
+            RoundButton { anchors.verticalCenter: parent.verticalCenter; icon: "back"; onClicked: root.back() }
             Text {
                 anchors.centerIn: parent
                 text: I18n.tr("Wallpaper")
@@ -134,9 +145,11 @@ Item {
             }
             Rectangle {
                 anchors.right: parent.right
-                width: 220; height: 32; radius: 16
+                anchors.verticalCenter: parent.verticalCenter
+                width: 150; height: 34; radius: 17
                 color: Theme.field
-                Icon { x: 10; anchors.verticalCenter: parent.verticalCenter; name: "search"; size: 16; tone: "gray" }
+                border.width: 1; border.color: root.hairline
+                Icon { x: 11; anchors.verticalCenter: parent.verticalCenter; name: "search"; size: 16; tone: "gray" }
                 Text {
                     x: 34; width: parent.width - 44; anchors.verticalCenter: parent.verticalCenter
                     elide: Text.ElideLeft; textFormat: Text.PlainText
@@ -147,14 +160,19 @@ Item {
             }
         }
 
-        // Big preview.
+        // Big preview (16:9, so wallpapers are not cropped much).
         Item {
-            width: parent.width; height: 250
+            width: parent.width; height: Math.round(width * 9 / 16)
             RoundImage {
                 anchors.fill: parent
-                radius: 20
+                radius: 16
                 source: root.selected ? "file://" + root.selected.path : ""
                 sourceSize: Qt.size(1280, 720)
+            }
+            // Hairline edge over the image.
+            Rectangle {
+                anchors.fill: parent; radius: 16
+                color: "transparent"; border.width: 1; border.color: root.hairline
             }
             Text {
                 visible: root.selected === null
@@ -162,11 +180,10 @@ Item {
                 text: root.all.length === 0 ? "No wallpapers in ~/Pictures/Wallpapers" : "No matches"
                 color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
             }
-            Rectangle {
+            Chip {
                 visible: root.selected !== null
-                x: 12; y: parent.height - height - 12
-                width: label.implicitWidth + 24; height: 28; radius: 14
-                color: Theme.scrim
+                x: 10; y: parent.height - height - 10
+                width: label.implicitWidth + 22
                 Text {
                     id: label
                     anchors.centerIn: parent
@@ -174,11 +191,10 @@ Item {
                     color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
                 }
             }
-            Rectangle {
+            Chip {
                 visible: root.selected !== null
-                x: parent.width - width - 12; y: parent.height - height - 12
-                width: count.implicitWidth + 24; height: 28; radius: 14
-                color: Theme.scrim
+                x: parent.width - width - 10; y: parent.height - height - 10
+                width: count.implicitWidth + 22
                 Text {
                     id: count
                     anchors.centerIn: parent
@@ -189,7 +205,7 @@ Item {
             }
         }
 
-        // Coverflow strip.
+        // Coverflow strip (softer tilt than before).
         ListView {
             id: strip
             width: parent.width; height: root.thumbH + 24
@@ -218,19 +234,20 @@ Item {
                 transform: Rotation {
                     origin.x: d.width / 2; origin.y: d.height / 2
                     axis { x: 0; y: 1; z: 0 }
-                    angle: Math.max(-40, Math.min(40, -d.dist * 22))
+                    angle: Math.max(-28, Math.min(28, -d.dist * 14))
                 }
 
                 RoundImage {
                     anchors.centerIn: parent
                     width: root.thumbW; height: root.thumbH
-                    radius: 14
+                    radius: 12
                     source: "file://" + d.modelData.path
                     sourceSize: Qt.size(264, 160)
                 }
+                // Selection ring in the accent colour.
                 Rectangle {
                     anchors.centerIn: parent
-                    width: root.thumbW + 6; height: root.thumbH + 6; radius: 17
+                    width: root.thumbW + 6; height: root.thumbH + 6; radius: 15
                     color: "transparent"; border.width: 2; border.color: Theme.fill
                     opacity: d.index === strip.currentIndex ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: Theme.durFast } }
