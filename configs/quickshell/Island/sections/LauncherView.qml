@@ -64,45 +64,67 @@ Item {
     function activate(item) { if (!item) return; if (item.pkg) install(item.pkg); else launch(item.e) }
     // Hide / unhide while keeping the scroll position.
     function toggleHide(entry) { if (!entry) return; list.keep = list.contentY; Apps.toggleHidden(entry) }
-    onQueryChanged: selected = 0
+    // Keep the text field in sync when the query changes from the forwarded-keys path.
+    onQueryChanged: { selected = 0; if (field.text !== query) field.text = query }
     onShowHiddenChanged: selected = 0
 
-    Keys.onPressed: e => {
+    // Navigation keys. `inField` is true when the text field itself has focus: it then handles
+    // typing, Backspace and Delete on its own. Otherwise the keys arrive forwarded from the pill
+    // (see Island.qml) and the typed text is collected here.
+    function handleKey(e, inField) {
         if (e.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) return
         if (e.key === Qt.Key_Down) { root.move(1); e.accepted = true }
         else if (e.key === Qt.Key_Up) { root.move(-1); e.accepted = true }
         else if (e.key === Qt.Key_Tab) { root.move(1); e.accepted = true }
         else if (e.key === Qt.Key_Backtab) { root.move(-1); e.accepted = true }
         else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.activate(root.results[root.selected]); e.accepted = true }
-        else if (e.key === Qt.Key_Delete) { root.toggleHide(root.results[root.selected]?.e); e.accepted = true }
-        else if (e.key === Qt.Key_Backspace) { if (root.query.length > 0) root.query = root.query.slice(0, -1); e.accepted = true }
         else if (e.key === Qt.Key_Escape) {
             if (root.query !== "") root.query = ""
             else if (root.showHidden) root.showHidden = false
             else root.done()
             e.accepted = true
         }
+        else if (inField) return
+        else if (e.key === Qt.Key_Delete) { root.toggleHide(root.results[root.selected]?.e); e.accepted = true }
+        else if (e.key === Qt.Key_Backspace) { if (root.query.length > 0) root.query = root.query.slice(0, -1); e.accepted = true }
         else if (e.text.length === 1 && e.text >= " " && e.text !== "\x7f") { root.query += e.text; e.accepted = true }
     }
+    Keys.onPressed: e => root.handleKey(e, false)
+
+    // When the page appears, focus the field (after the island's own focus reset on open).
+    onVisibleChanged: if (visible) focusTimer.restart()
+    Timer { id: focusTimer; interval: 200; onTriggered: if (root.visible && root.enabled) field.forceActiveFocus() }
 
     Column {
         id: col
         width: parent.width
         spacing: 8
 
-        // Search box (shows what you type): same slim style as the island search bar.
+        // Search box: a real text field, so it can be clicked and typed in.
         Rectangle {
             width: parent.width; height: 34; radius: 17
             color: Theme.field
-            border.width: 1; border.color: root.hairline
+            border.width: 1; border.color: field.activeFocus ? Theme.fill : root.hairline
+            Behavior on border.color { ColorAnimation { duration: Theme.durMicro } }
             Icon { x: 12; anchors.verticalCenter: parent.verticalCenter; name: "search"; size: 16; tone: "gray" }
-            Text {
+            TextInput {
+                id: field
                 x: 38; width: parent.width - 52; anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideLeft; textFormat: Text.PlainText
-                text: root.query !== "" ? root.query : "Search apps & packages"
-                color: root.query !== "" ? Theme.textPrimary : Theme.textSecondary
+                clip: true
+                color: Theme.textPrimary
+                selectionColor: Theme.fill; selectedTextColor: Theme.onAccent
                 font.family: Theme.font; font.pixelSize: Theme.fontBody
+                onTextEdited: root.query = text
+                Keys.onPressed: e => root.handleKey(e, true)
+                Text {
+                    visible: field.text === ""
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Search apps & packages"
+                    color: Theme.textSecondary
+                    font.family: Theme.font; font.pixelSize: Theme.fontBody
+                }
             }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.IBeamCursor; onClicked: field.forceActiveFocus() }
         }
 
         // Results: scrollable list (wheel, or arrow keys that follow the selection).

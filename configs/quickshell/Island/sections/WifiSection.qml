@@ -80,27 +80,47 @@ Column {
                             color: nm.containsMouse ? Theme.hover : "transparent"
                             Text {
                                 x: 14; anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 100; elide: Text.ElideRight
+                                width: parent.width - (net.modelData.active ? 160 : 100); elide: Text.ElideRight
                                 text: net.modelData.ssid
                                 color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
                                 font.weight: net.modelData.active ? Font.DemiBold : Font.Normal
                             }
-                            Row {
-                                anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                                spacing: 8
-                                Icon { name: "check"; size: 14; visible: net.modelData.active; anchors.verticalCenter: parent.verticalCenter }
-                                Icon { name: "lock"; size: 13; tone: "gray"; visible: net.modelData.secure; anchors.verticalCenter: parent.verticalCenter }
-                                SignalBars { signal: net.modelData.signal; anchors.verticalCenter: parent.verticalCenter }
-                            }
+                            // Row click: join the network (the connected one has its own button).
                             MouseArea {
                                 id: nm
                                 anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     const n = net.modelData
-                                    if (n.active) { Network.disconnect(); return }
+                                    if (n.active) return
                                     if (n.secure && !n.known) { root.askFor = root.askFor === n.ssid ? "" : n.ssid; pass.text = ""; Qt.callLater(() => pass.forceActiveFocus()) }
                                     else { root.askFor = ""; Network.connect(n.ssid, "") }
                                 }
+                            }
+                            // Declared after the row MouseArea so the buttons receive their own clicks.
+                            Row {
+                                anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
+                                spacing: 8
+                                // Connected network: explicit Disconnect button.
+                                Rectangle {
+                                    visible: net.modelData.active
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: dcT.implicitWidth + 20; height: 24; radius: 12
+                                    color: dcM.containsMouse ? Theme.fillHover : Theme.fill
+                                    Behavior on color { ColorAnimation { duration: Theme.durMicro } }
+                                    Text { id: dcT; anchors.centerIn: parent; text: I18n.tr("Disconnect"); color: Theme.onAccent; font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold }
+                                    MouseArea { id: dcM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Network.disconnect() }
+                                }
+                                // Saved network (not connected): Forget removes the saved password.
+                                Text {
+                                    visible: !net.modelData.active && net.modelData.known
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: I18n.tr("Forget")
+                                    color: fgM.containsMouse ? Theme.danger : Theme.textSecondary
+                                    font.family: Theme.font; font.pixelSize: Theme.fontCaption
+                                    MouseArea { id: fgM; anchors.fill: parent; anchors.margins: -6; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Network.forget(net.modelData.ssid) }
+                                }
+                                Icon { name: "lock"; size: 13; tone: "gray"; visible: net.modelData.secure && !net.modelData.active; anchors.verticalCenter: parent.verticalCenter }
+                                SignalBars { signal: net.modelData.signal; anchors.verticalCenter: parent.verticalCenter }
                             }
                         }
                         // Password (only for chosen network).
