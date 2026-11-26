@@ -20,7 +20,7 @@ Singleton {
         { id: "notes", label: I18n.tr("Notes"), icon: "note", slider: false },
         { id: "emoji", label: I18n.tr("Emojis"), icon: "emoji", slider: false },
         { id: "launcher", label: I18n.tr("Apps"), icon: "apps", slider: false },
-        { id: "wallpaper", label: I18n.tr("Wallpaper"), icon: "brush", slider: false },
+        { id: "wallpaper", label: I18n.tr("Wallpaper"), icon: "image", slider: false },
         { id: "browser", label: I18n.tr("Browser"), icon: "globe", slider: false },
         { id: "files", label: I18n.tr("Files"), icon: "folder", slider: false }
     ]

@@ -19,7 +19,7 @@ Text {
         "chevron": "\uf078", "chip": "\uf2db", "clock": "\uf017", "clipboard": "\uf0ea", "desktops": "\uf24d",
         "display": "\uf108", "dismiss": "\uf00d", "drop": "\uf043", "emoji": "\uf118",
         "ethernet": "\uf0e8", "external": "\uf08e", "eye": "\uf06e", "eye-off": "\uf070",
-        "folder": "\uf07b", "gesture": "\uf256", "globe": "\uf0ac", "info": "\uf05a",
+        "folder": "\uf07b", "gesture": "\uf256", "globe": "\uf0ac", "image": "\uf03e", "info": "\uf05a",
         "keyboard": "\uf11c", "lock": "\uf023", "logout": "\uf08b", "moon": "\uf186",
         "mouse": "\uf245", "music": "\uf001", "mute": "\uf026", "next": "\uf051",
         "note": "\uf249", "pause": "\uf04c", "pin": "\uf08d", "play": "\uf04b",
