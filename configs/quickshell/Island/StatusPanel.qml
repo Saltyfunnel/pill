@@ -253,6 +253,7 @@ Item {
         property string label
         property string detail
         property string hoverDetail
+        property string restDetail          // always-visible line under the name (empty = nothing)
         property string tipTitle
         property string tipPrefix
         property var tipLines: []
@@ -309,8 +310,9 @@ Item {
             horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight
             // At rest only the name; detail appears on hover or if there's an alert.
             // On hover, on the same line: highest usage right now (no tooltips covering rows).
-            text: g.hot ? (g.tipLines.length ? (g.tipPrefix !== "" ? g.tipPrefix + " · " : "") + g.tipLines.slice(0, g.tipPrefix !== "" ? 1 : 2).join(" · ") : g.hoverDetail)
-                : g.bad ? g.detail : ""
+            // Only the single top app on hover: two names plus sizes were wider than the ring column.
+            text: g.hot ? (g.tipLines.length ? (g.tipPrefix !== "" ? g.tipPrefix + " · " : "") + g.tipLines[0] : g.hoverDetail)
+                : g.bad ? g.detail : g.restDetail
             opacity: text !== "" ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Theme.durNormal } }
             color: g.bad ? Theme.danger : Theme.textSecondary
@@ -431,12 +433,15 @@ Item {
             visible: !(root.n && root.n.type === "wifi" && Network.hasWifi && SysStatus.online)
             Row2 {
                 icon: root.n && root.n.type === "wifi" ? "wifi" : "ethernet"
-                label: !root.n || !root.n.type ? I18n.tr("Offline") : (root.n.type === "wifi" ? "Internet" : "Ethernet")
-                value: !SysStatus.known ? I18n.tr("Checking…")
+                label: !root.n ? "Internet" : !root.n.type ? I18n.tr("Offline") : (root.n.type === "wifi" ? "Internet" : "Ethernet")
+                // While the first reading is still loading, or when nothing is connected, the
+                // cached connectivity must not say "Connected".
+                value: !root.n || !SysStatus.known ? I18n.tr("Checking…")
+                       : !root.n.type ? I18n.tr("Not connected")
                        : SysStatus.online ? I18n.tr("Connected")
                        : SysStatus.connectivity === "portal" ? I18n.tr("Requires sign-in")
                        : SysStatus.connectivity === "limited" ? I18n.tr("No internet (limited network)") : I18n.tr("No internet")
-                valueColor: SysStatus.known && !SysStatus.online ? Theme.danger : Theme.textSecondary
+                valueColor: root.n && SysStatus.known && (!root.n.type || !SysStatus.online) ? Theme.danger : Theme.textSecondary
             }
         }
         WifiSection { id: wifiSec; width: parent.width; active: root.open }
@@ -513,6 +518,8 @@ Item {
                         onHotChanged: root.procWanted = hot || cpuG.hot
                         onActivated: root.openMonitor()
                         label: I18n.tr("Memory")
+                        // Used / total is always visible (short, fits under the ring).
+                        restDetail: root.r ? SysStatus.gib(root.r.memUsed) + " / " + SysStatus.gib(root.r.memTotal) + " GB" : ""
                         detail: !root.r ? "…" : root.r.memUsed / root.r.memTotal > 0.9 ? I18n.tr("Almost full")
                               : I18n.tr("%1 of %2 GB", SysStatus.gib(root.r.memUsed), SysStatus.gib(root.r.memTotal))
                         hoverDetail: root.r ? I18n.tr("%1 GB free", SysStatus.gib(root.r.memTotal - root.r.memUsed)) : "…"
