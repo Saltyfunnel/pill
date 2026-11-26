@@ -23,11 +23,19 @@ Column {
     }
     onResultsChanged: selected = 0
 
+    // Terminal apps (Terminal=true in the .desktop file, e.g. btop) need a terminal around them.
+    function run(entry) {
+        if (entry.runInTerminal)
+            Quickshell.execDetached(["kitty", "-e"].concat(entry.command.filter(a => !/^%[a-zA-Z]$/.test(a))))
+        else
+            entry.execute()
+    }
+
     // Launch the app, or install the package in a terminal.
     function launch(item) {
         if (!item) return
         if (item.pkg) pk.install(item.pkg)
-        else { Apps.recordLaunch(item.e); item.e.execute() }
+        else { Apps.recordLaunch(item.e); run(item.e) }
         root.launched()
     }
 

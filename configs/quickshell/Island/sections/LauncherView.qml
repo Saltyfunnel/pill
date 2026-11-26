@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import "../../Common"
 
 // App launcher page (Super+D): search box and a list of applications.
@@ -50,7 +51,14 @@ Item {
 
     function reset() { pk.reset(); query = ""; selected = 0; showHidden = false }
     function move(d) { if (results.length > 0) selected = Math.max(0, Math.min(results.length - 1, selected + d)) }
-    function launch(entry) { if (!entry) return; Apps.recordLaunch(entry); entry.execute(); done() }
+    // Terminal apps (Terminal=true in the .desktop file, e.g. btop) need a terminal around them.
+    function run(entry) {
+        if (entry.runInTerminal)
+            Quickshell.execDetached(["kitty", "-e"].concat(entry.command.filter(a => !/^%[a-zA-Z]$/.test(a))))
+        else
+            entry.execute()
+    }
+    function launch(entry) { if (!entry) return; Apps.recordLaunch(entry); run(entry); done() }
     function install(p) { if (!p) return; pk.install(p); done() }
     // Enter / click on a result: launch the app or install the package.
     function activate(item) { if (!item) return; if (item.pkg) install(item.pkg); else launch(item.e) }
