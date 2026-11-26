@@ -9,6 +9,8 @@ import "../../Common"
 //   Right click or Delete  hide / unhide the app
 //   Esc     clears the search, then leaves "hidden" view, then closes the island
 // With an empty search the most used apps are listed first.
+// With 2+ letters typed, matching packages from the official repos that are not installed
+// yet are listed below the apps; Enter on one installs it in a kitty window.
 // Keys arrive through the pill's Keys.forwardTo (see Island.qml).
 Item {
     id: root
@@ -24,12 +26,19 @@ Item {
     // When true, hidden apps are listed too (dimmed) so they can be unhidden.
     property bool showHidden: false
 
+    // Packages from the official repos that match the search (not installed yet).
+    PkgSearch { id: pk; query: root.query; limit: 8 }
+
     // Flat list of { e: DesktopEntry, header: string }. `header` is a section title shown
     // above the row when it is the first of its group (empty otherwise).
     readonly property var results: {
         const q = root.query.trim()
-        if (q !== "")
-            return Apps.search(q, 60, root.showHidden).map(e => ({ e: e, header: "" }))
+        if (q !== "") {
+            // With package results below, only the best matching apps are kept.
+            const apps = Apps.search(q, pk.clean.length >= 2 ? 12 : 60, root.showHidden).map(e => ({ e: e, header: "" }))
+            const extra = root.showHidden ? [] : pk.results.map((p, i) => ({ pkg: p, header: i === 0 ? "Install from repos" : "" }))
+            return apps.concat(extra)
+        }
         const top = root.showHidden ? [] : Apps.top(4)
         const topIds = top.map(e => e.id)
         const rest = Apps.list(1000, root.showHidden).filter(e => topIds.indexOf(e.id) < 0)
@@ -39,9 +48,12 @@ Item {
         return out
     }
 
-    function reset() { query = ""; selected = 0; showHidden = false }
+    function reset() { pk.reset(); query = ""; selected = 0; showHidden = false }
     function move(d) { if (results.length > 0) selected = Math.max(0, Math.min(results.length - 1, selected + d)) }
     function launch(entry) { if (!entry) return; Apps.recordLaunch(entry); entry.execute(); done() }
+    function install(p) { if (!p) return; pk.install(p); done() }
+    // Enter / click on a result: launch the app or install the package.
+    function activate(item) { if (!item) return; if (item.pkg) install(item.pkg); else launch(item.e) }
     // Hide / unhide while keeping the scroll position.
     function toggleHide(entry) { if (!entry) return; list.keep = list.contentY; Apps.toggleHidden(entry) }
     onQueryChanged: selected = 0
@@ -53,7 +65,7 @@ Item {
         else if (e.key === Qt.Key_Up) { root.move(-1); e.accepted = true }
         else if (e.key === Qt.Key_Tab) { root.move(1); e.accepted = true }
         else if (e.key === Qt.Key_Backtab) { root.move(-1); e.accepted = true }
-        else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.launch(root.results[root.selected]?.e); e.accepted = true }
+        else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) { root.activate(root.results[root.selected]); e.accepted = true }
         else if (e.key === Qt.Key_Delete) { root.toggleHide(root.results[root.selected]?.e); e.accepted = true }
         else if (e.key === Qt.Key_Backspace) { if (root.query.length > 0) root.query = root.query.slice(0, -1); e.accepted = true }
         else if (e.key === Qt.Key_Escape) {
@@ -79,7 +91,7 @@ Item {
             Text {
                 x: 38; width: parent.width - 52; anchors.verticalCenter: parent.verticalCenter
                 elide: Text.ElideLeft; textFormat: Text.PlainText
-                text: root.query !== "" ? root.query : "Search apps"
+                text: root.query !== "" ? root.query : "Search apps & packages"
                 color: root.query !== "" ? Theme.textPrimary : Theme.textSecondary
                 font.family: Theme.font; font.pixelSize: Theme.fontBody
             }
@@ -111,8 +123,11 @@ Item {
                             const k = list.keep
                             list.keep = -1
                             Qt.callLater(() => { list.contentY = k })
-                        } else {
+                        } else if (root.selected === 0) {
                             list.positionViewAtBeginning()
+                        } else {
+                            // Package results arriving must not throw the view off the selection.
+                            list.positionViewAtIndex(root.selected, ListView.Contain)
                         }
                     }
                 }
@@ -122,7 +137,8 @@ Item {
                     required property var modelData
                     required property int index
                     readonly property int headH: row.modelData.header !== "" ? 26 : 0
-                    readonly property bool isHiddenApp: Apps.isHidden(row.modelData.e)
+                    readonly property bool isPkg: row.modelData.pkg !== undefined
+                    readonly property bool isHiddenApp: !row.isPkg && Apps.isHidden(row.modelData.e)
                     width: list.width
                     height: row.headH + root.rowH
 
@@ -146,22 +162,31 @@ Item {
                         opacity: row.isHiddenApp ? 0.45 : 1
                         Behavior on color { ColorAnimation { duration: Theme.durMicro } }
                         Image {
+                            visible: !row.isPkg || row.modelData.pkg.icon !== ""
                             x: 12; anchors.verticalCenter: parent.verticalCenter
                             width: 26; height: 26; sourceSize: Qt.size(52, 52)
-                            source: Apps.iconFor(row.modelData.e); smooth: true; asynchronous: true
+                            source: row.isPkg ? row.modelData.pkg.icon : Apps.iconFor(row.modelData.e); smooth: true; asynchronous: true
+                        }
+                        // Packages without an icon in the icon theme get a small tile with a plus.
+                        Rectangle {
+                            visible: row.isPkg && row.modelData.pkg.icon === ""
+                            x: 12; anchors.verticalCenter: parent.verticalCenter
+                            width: 26; height: 26; radius: 9
+                            color: Theme.field
+                            Icon { anchors.centerIn: parent; name: "plus"; size: 16; tone: "accent" }
                         }
                         Column {
                             x: 50; width: parent.width - 50 - (row.isHiddenApp ? 48 : 16)
                             anchors.verticalCenter: parent.verticalCenter
                             Text {
                                 width: parent.width; elide: Text.ElideRight; textFormat: Text.PlainText
-                                text: row.modelData.e.name
+                                text: row.isPkg ? row.modelData.pkg.name : row.modelData.e.name
                                 color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontBody; font.weight: Font.Medium
                             }
                             Text {
                                 width: parent.width; elide: Text.ElideRight; textFormat: Text.PlainText
                                 visible: text !== ""
-                                text: row.modelData.e.genericName || ""
+                                text: row.isPkg ? (row.modelData.pkg.repo + "  ·  " + row.modelData.pkg.ver + "  ·  " + row.modelData.pkg.desc) : (row.modelData.e.genericName || "")
                                 color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
                             }
                         }
@@ -178,8 +203,8 @@ Item {
                             // Real pointer movement only: scrolling under a still pointer must not steal the selection.
                             onPositionChanged: root.selected = row.index
                             onClicked: m => {
-                                if (m.button === Qt.RightButton) root.toggleHide(row.modelData.e)
-                                else root.launch(row.modelData.e)
+                                if (m.button === Qt.RightButton) { if (!row.isPkg) root.toggleHide(row.modelData.e) }
+                                else root.activate(row.modelData)
                             }
                         }
                     }
@@ -199,7 +224,7 @@ Item {
             Text {
                 anchors.left: parent.left; anchors.leftMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.showHidden ? "Right-click to unhide" : "Right-click to hide"
+                text: root.results[root.selected]?.pkg ? "Enter installs in a terminal" : (root.showHidden ? "Right-click to unhide" : "Right-click to hide")
                 color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
             }
             Text {

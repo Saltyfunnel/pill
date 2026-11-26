@@ -12,12 +12,24 @@ Column {
     spacing: Theme.space1
 
     function focusField() { field.text = ""; field.forceActiveFocus() }
-    function reset() { field.text = ""; field.focus = false }
+    function reset() { field.text = ""; field.focus = false; pk.reset() }
 
-    readonly property var results: Apps.search(query, 5)
+    // Installed apps first, then (2+ letters) up to 3 packages from the official repos
+    // that are not installed yet.
+    PkgSearch { id: pk; query: root.query; limit: 3 }
+    readonly property var results: {
+        const apps = Apps.search(query, 5).map(e => ({ e: e }))
+        return apps.concat(pk.clean.length >= 2 ? pk.results.map(p => ({ pkg: p })) : [])
+    }
     onResultsChanged: selected = 0
 
-    function launch(entry) { if (entry) { Apps.recordLaunch(entry); entry.execute(); root.launched() } }
+    // Launch the app, or install the package in a terminal.
+    function launch(item) {
+        if (!item) return
+        if (item.pkg) pk.install(item.pkg)
+        else { Apps.recordLaunch(item.e); item.e.execute() }
+        root.launched()
+    }
 
     Rectangle {
         id: box
@@ -71,7 +83,7 @@ Column {
             clip: true
             Text {
                 visible: !field.text
-                text: I18n.tr("Search")
+                text: I18n.tr("Search apps & packages")
                 color: Theme.textSecondary
                 font: field.font
             }
@@ -83,32 +95,65 @@ Column {
 
     Repeater {
         model: root.results
-        delegate: Rectangle {
+        delegate: Item {
+            id: row
             required property var modelData
             required property int index
-            width: root.width; height: 40; radius: height / 2      // pill, like the field and launcher
-            color: index === root.selected || hov.containsMouse ? Theme.field : "transparent"
-            Image {
-                id: ic
-                x: 12; anchors.verticalCenter: parent.verticalCenter
-                width: 24; height: 24
-                sourceSize: Qt.size(48, 48)
-                source: Apps.iconFor(modelData)
-            }
+            readonly property bool isPkg: row.modelData.pkg !== undefined
+            // Small caption above the first package row.
+            readonly property int headH: row.isPkg && (row.index === 0 || root.results[row.index - 1].pkg === undefined) ? 20 : 0
+            width: root.width; height: row.headH + 40
+
             Text {
-                anchors.left: ic.right; anchors.leftMargin: 12
-                anchors.right: parent.right; anchors.rightMargin: 12
-                anchors.verticalCenter: parent.verticalCenter
-                elide: Text.ElideRight
-                text: modelData.name
-                color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
+                visible: row.headH > 0
+                x: 14; y: 3
+                text: I18n.tr("Install from repos")
+                color: Theme.textSecondary
+                font.family: Theme.font; font.pixelSize: Theme.fontCaption; font.weight: Font.DemiBold
             }
-            MouseArea {
-                id: hov
-                anchors.fill: parent; hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.launch(modelData)
-                onWheel: w => w.accepted = true   // do not change workspace over the list
+            Rectangle {
+                y: row.headH; width: parent.width; height: 40; radius: 20      // pill, like the field and launcher
+                color: row.index === root.selected || hov.containsMouse ? Theme.field : "transparent"
+                Image {
+                    id: ic
+                    visible: !row.isPkg || row.modelData.pkg.icon !== ""
+                    x: 12; anchors.verticalCenter: parent.verticalCenter
+                    width: 24; height: 24
+                    sourceSize: Qt.size(48, 48)
+                    source: row.isPkg ? row.modelData.pkg.icon : Apps.iconFor(row.modelData.e)
+                }
+                // Packages without an icon in the icon theme get a small tile with a plus.
+                Rectangle {
+                    visible: row.isPkg && row.modelData.pkg.icon === ""
+                    x: 12; anchors.verticalCenter: parent.verticalCenter
+                    width: 24; height: 24; radius: 8
+                    color: Theme.raised
+                    Icon { anchors.centerIn: parent; name: "plus"; size: 14; tone: "accent" }
+                }
+                Text {
+                    anchors.left: ic.right; anchors.leftMargin: 12
+                    anchors.right: row.isPkg ? ver.left : parent.right
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideRight
+                    text: row.isPkg ? row.modelData.pkg.name : row.modelData.e.name
+                    color: Theme.textPrimary; font.family: Theme.font; font.pixelSize: Theme.fontLabel
+                }
+                Text {
+                    id: ver
+                    visible: row.isPkg
+                    anchors.right: parent.right; anchors.rightMargin: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: row.isPkg ? row.modelData.pkg.repo + "  ·  " + row.modelData.pkg.ver : ""
+                    color: Theme.textSecondary; font.family: Theme.font; font.pixelSize: Theme.fontCaption
+                }
+                MouseArea {
+                    id: hov
+                    anchors.fill: parent; hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.launch(row.modelData)
+                    onWheel: w => w.accepted = true   // do not change workspace over the list
+                }
             }
         }
     }
