@@ -2,7 +2,7 @@
 # System status for the island panel. Prints a JSON and exits.
 #   sysstatus.py res   → resources (CPU %, RAM, disk, temperature)  [every 2 s with panel open]
 #   sysstatus.py full  → resources + network + devices + GPU        [on open and every ~8 s]
-import json, os, shutil, subprocess, sys, time
+import json, os, re, shutil, subprocess, sys, time
 
 def run(cmd, t=1.5):
     try:
@@ -29,6 +29,22 @@ def is_external(dev):
     except OSError:
         return False
 
+def fs_labels():
+    """{real device path: filesystem label} from /dev/disk/by-label (udev escapes odd chars as \\xNN)."""
+    out = {}
+    base = "/dev/disk/by-label"
+    try:
+        for n in os.listdir(base):
+            label = re.sub(r"\\x([0-9a-fA-F]{2})", lambda m: chr(int(m.group(1), 16)), n)
+            out[os.path.realpath(os.path.join(base, n))] = label
+    except OSError:
+        pass
+    return out
+
+def looks_like_id(s):
+    """UUID-like names (hex digits and dashes) mean nothing to a person."""
+    return re.fullmatch(r"[0-9A-Fa-f-]{8,}", s) is not None
+
 def disks():
     """Every mounted internal disk (one entry per device): [{name, mount, used, total}]."""
     seen = {}
@@ -46,12 +62,16 @@ def disks():
         if dev in seen and len(seen[dev]) <= len(mount): continue     # subvolumes / bind mounts: keep the shortest path
         seen[dev] = mount
     out = []
+    labels = fs_labels()
     for dev, mount in seen.items():
         try: du = shutil.disk_usage(mount)
         except OSError: continue
         if du.total == 0: continue
-        out.append({"name": "/" if mount == "/" else os.path.basename(mount.rstrip("/")) or mount,
-                    "mount": mount, "used": du.used, "total": du.total})
+        # Name: "/" for root, else the filesystem label (e.g. "Games"), else the mount folder
+        # name, else the device name (sdb1) when the folder name is just a UUID.
+        base = os.path.basename(mount.rstrip("/")) or mount
+        name = "/" if mount == "/" else (labels.get(dev) or (os.path.basename(dev) if looks_like_id(base) else base))
+        out.append({"name": name, "mount": mount, "used": du.used, "total": du.total})
     out.sort(key=lambda d: (d["mount"] != "/", d["mount"]))              # root first
     return out
 
