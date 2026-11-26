@@ -104,9 +104,24 @@ Singleton {
         conn.running = true
     }
     function disconnect() {
-        Quickshell.execDetached(["sh", "-c", "nmcli -t -f DEVICE,TYPE dev | grep ':wifi$' | cut -d: -f1 | xargs -r -n1 nmcli dev disconnect"])
-        later.restart()
+        // Show it at once; the real state is re-read when nmcli has finished.
+        ssid = ""; signal = 0
+        networks = networks.map(n => Object.assign({}, n, { active: false }))
+        disc.running = true
     }
+    Process {
+        id: disc
+        command: ["sh", "-c", "nmcli -t -f DEVICE,TYPE dev | grep ':wifi$' | cut -d: -f1 | xargs -r -n1 nmcli dev disconnect"]
+        onExited: { root.refresh(); SysStatus.refreshNow(); later.restart() }
+    }
+    // Forget a saved network (deletes its connection profile; it will no longer auto-join).
+    function forget(name) {
+        known = known.filter(k => k !== name)
+        networks = networks.map(n => n.ssid === name ? Object.assign({}, n, { known: false }) : n)
+        forgetProc.command = ["nmcli", "connection", "delete", "id", name]
+        forgetProc.running = true
+    }
+    Process { id: forgetProc; onExited: { root.refresh(); later.restart() } }
     Process {
         id: conn
         stderr: StdioCollector { id: connErr }
@@ -118,6 +133,7 @@ Singleton {
             }
             root.connecting = ""
             root.refresh()
+            SysStatus.refreshNow()
         }
     }
 }

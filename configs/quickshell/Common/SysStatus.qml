@@ -16,6 +16,8 @@ Singleton {
     property int users: 0
     function acquire() { users++; if (users === 1) { full.go(); conn.go() } }
     function release() { users = Math.max(0, users - 1) }
+    // Re-read connectivity and (panel open) everything else now, e.g. after Wi-Fi was changed.
+    function refreshNow() { conn.go(); if (users > 0) full.go() }
 
     // Connectivity: "full" | "limited" | "portal" | "none" | "unknown"
     property string connectivity: "unknown"
@@ -27,6 +29,7 @@ Singleton {
     property var dev: null      // { keyboards, mice, audio, bluetooth, usb }
     property var gpu: null      // { name, util, temp } | null
 
+    // Run through python3 so the script works even when a copy lost its executable bit.
     readonly property string script: Qt.resolvedUrl("../scripts/sysstatus.py").toString().replace("file://", "")
 
     function gib(b) { return (b / 1073741824).toFixed(1) }
@@ -56,13 +59,13 @@ Singleton {
     Process {
         id: resP
         function go() { if (!running) running = true }
-        command: [root.script, "res"]
+        command: ["python3", root.script, "res"]
         stdout: StdioCollector { onStreamFinished: { try { root.res = JSON.parse(text).res } catch (e) {} } }
     }
     Process {
         id: full
         function go() { if (!running) running = true }
-        command: [root.script, "full"]
+        command: ["python3", root.script, "full"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
